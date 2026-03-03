@@ -1,0 +1,11 @@
+{
+  "name": "ajgsecurity",
+  "private": true,
+  "workspaces": [
+    "lib"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=lib",
+    "build": "npm run build --workspace=lib"
+  }
+}
