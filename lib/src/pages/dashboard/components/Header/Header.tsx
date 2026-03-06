@@ -24,7 +24,10 @@ export function Header() {
 
             <div className="flex items-center gap-3">
                 {headerInfo.showPrimaryAction && (
-                    <Button className="gap-2 h-9 px-4 text-xs font-bold tracking-wider">
+                    <Button
+                        className="gap-2 h-9 px-4 text-xs font-bold tracking-wider"
+                        onClick={headerInfo.onPrimaryAction}
+                    >
                         <Save className="w-4 h-4" />
                         {headerInfo.primaryActionLabel ?? 'Save'}
                     </Button>

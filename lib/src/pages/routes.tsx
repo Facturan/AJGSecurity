@@ -6,6 +6,7 @@ import { PayrollEntry } from "./dashboard/PayrollEntry";
 import { MasterData } from "./dashboard/MasterData";
 import { Settings } from "./dashboard/Settings";
 import { Company } from "./dashboard/Company";
+import { Login } from "./Login";
 
 function ErrorPage() {
   const error = useRouteError() as any;
@@ -27,6 +28,10 @@ function ErrorPage() {
 }
 
 export const router = createBrowserRouter([
+  {
+    path: "/login",
+    Component: Login,
+  },
   {
     path: "/",
     Component: Sidebar,

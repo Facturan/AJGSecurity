@@ -7,6 +7,7 @@ interface HeaderInfo {
     showSearch?: boolean;
     showPrimaryAction?: boolean;
     primaryActionLabel?: string;
+    onPrimaryAction?: () => void;
 }
 
 interface HeaderContextType {
@@ -32,7 +33,7 @@ export function HeaderProvider({ children }: { children: ReactNode }) {
     return (
         <HeaderContext.Provider value={{ headerInfo, setHeaderInfo }}>
             {children}
-        </HeaderContext.Provider> 
+        </HeaderContext.Provider>
     );
 }
 

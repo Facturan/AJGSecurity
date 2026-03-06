@@ -9,13 +9,15 @@ import {
     PanelLeft,
     PanelLeftClose,
     Building2,
-    ChevronDown,
     ChevronRight,
+    ChevronLeft,
+    ChevronDown,
     Users2,
     Briefcase,
     MapPin,
     Award,
-    Clock
+    Clock,
+    Database
 } from 'lucide-react';
 import { PesoIcon } from './icons/PesoIcon';
 import React, { useState, useEffect } from 'react';
@@ -47,12 +49,12 @@ const navItems: NavItem[] = [
             { to: '/company/customer', label: 'Customer', icon: Users2 },
         ]
     },
-    { to: '/employee-registration', label: 'Employee Registration', icon: UserPlus },
+    { to: '/employee-registration', label: 'Employee Registration Form', icon: UserPlus },
     { to: '/payroll-entry', label: 'Payroll Data Entry', icon: PesoIcon },
 
     {
         label: 'Master Data',
-        icon: Settings,
+        icon: Database,
         children: [
             { to: '/master-data/employee-data-list', label: 'Employee Data List', icon: Users },
             { to: '/master-data/position', label: 'Position', icon: Briefcase },
@@ -65,7 +67,7 @@ const navItems: NavItem[] = [
             { to: '/master-data/firearm-setup', label: 'Firearm Setup', icon: Target },
         ]
     },
-    { to: '/settings', label: 'Settings', icon: SlidersHorizontal },
+    { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
 function useLiveDate() {
@@ -90,6 +92,8 @@ function SidebarInner() {
             return false;
         }
     });
+    const [isHovered, setIsHovered] = useState(false);
+    const isExpanded = !collapsed || isHovered;
 
     // Track which parent menus are open
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
@@ -115,7 +119,7 @@ function SidebarInner() {
     };
 
     const toggleMenu = (label: string) => {
-        if (collapsed) {
+        if (!isExpanded) {
             setCollapsed(false);
             setOpenMenus({ [label]: true });
             return;
@@ -126,35 +130,30 @@ function SidebarInner() {
         }));
     };
 
-    const sidebarWidth = collapsed ? 72 : 256;
+    const sidebarWidth = isExpanded ? 256 : 72;
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
             <aside
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 className="flex flex-col shadow-2xl flex-shrink-0 z-20 bg-white dark:bg-slate-800 transition-all duration-300 ease-in-out overflow-hidden"
                 style={{ width: sidebarWidth }}
             >
                 <div
-                    className={`flex items-center justify-between border-b border-slate-200 dark:border-slate-700 flex-shrink-0 h-16 ${collapsed ? 'px-2' : 'px-4'}`}
+                    className={`flex items-center justify-center border-b border-slate-200 dark:border-slate-700 flex-shrink-0 h-16 ${!isExpanded ? 'px-2' : 'justify-start px-4'}`}
                 >
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
                             <img src={logo} alt="HRIS Logo" className="w-full h-full object-cover" />
                         </div>
-                        {!collapsed && (
+                        {isExpanded && (
                             <div className="flex flex-col leading-tight min-w-0">
                                 <span className="text-slate-900 dark:text-slate-100 font-bold text-sm tracking-wide truncate">HRIS</span>
                                 <span className="text-slate-600 dark:text-slate-400 text-[10px] font-medium leading-none">Payroll Software</span>
                             </div>
                         )}
                     </div>
-                    <button
-                        onClick={toggleSidebar}
-                        className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors p-1.5 rounded flex-shrink-0"
-                        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                    >
-                        {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-                    </button>
                 </div>
 
                 <nav className="flex-1 py-4 space-y-1 overflow-y-auto px-2">
@@ -179,13 +178,13 @@ function SidebarInner() {
                                     >
                                         <div className="flex items-center gap-3 min-w-0">
                                             <Icon className="w-5 h-5 shrink-0" />
-                                            {!collapsed && <span className="truncate">{label}</span>}
+                                            {isExpanded && <span className="truncate">{label}</span>}
                                         </div>
-                                        {!collapsed && (
+                                        {isExpanded && (
                                             isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
                                         )}
                                     </button>
-                                    {isOpen && !collapsed && (
+                                    {isOpen && isExpanded && (
                                         <div className="ml-4 pl-4 border-l border-slate-200 dark:border-slate-700 space-y-1 mt-1">
                                             {children.map((child) => (
                                                 <NavLink
@@ -214,7 +213,7 @@ function SidebarInner() {
                                 key={item.to}
                                 to={item.to!}
                                 end={item.end}
-                                title={collapsed ? label : undefined}
+                                title={!isExpanded ? label : undefined}
                                 className={({ isActive }) =>
                                     `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 active:scale-[0.98] ${isActive
                                         ? 'bg-blue-300 dark:bg-blue-600 text-slate-900 dark:text-slate-100 shadow-md transform'
@@ -223,25 +222,41 @@ function SidebarInner() {
                                 }
                             >
                                 <Icon className="w-5 h-5 shrink-0" />
-                                {!collapsed && <span className="truncate">{label}</span>}
+                                {isExpanded && <span className="truncate">{label}</span>}
                             </NavLink>
                         );
                     })}
                 </nav>
 
                 <div
-                    className={`border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 py-4 ${collapsed ? 'px-2' : 'px-5'}`}
+                    className={`flex flex-col border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50 py-4 ${!isExpanded ? 'px-2 items-center' : 'px-5'}`}
                 >
-                    {collapsed ? (
-                        <div className="flex flex-col items-center gap-1">
+                    {!isExpanded ? (
+                        <div className="flex flex-col items-center gap-4">
+                            <button
+                                onClick={toggleSidebar}
+                                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 mx-auto"
+                                title="Expand sidebar"
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </button>
                             <span className="text-slate-600 dark:text-slate-400 text-[10px] font-semibold">v2.1.7</span>
                         </div>
                     ) : (
-                        <>
-                            <p className="text-slate-700 dark:text-slate-300 text-xs font-semibold">DreamTeam I.T. Solutions</p>
-                            <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5">Version 2.1.7</p>
-                            <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5">{liveDate}</p>
-                        </>
+                        <div className="flex items-end justify-between w-full">
+                            <div className="flex flex-col">
+                                <p className="text-slate-700 dark:text-slate-300 text-xs font-semibold">DreamTeam I.T. Solutions</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5">Version 2.1.7</p>
+                                <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5">{liveDate}</p>
+                            </div>
+                            <button
+                                onClick={toggleSidebar}
+                                className="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 flex-shrink-0 mb-0.5"
+                                title="Collapse sidebar"
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
+                        </div>
                     )}
                 </div>
             </aside>

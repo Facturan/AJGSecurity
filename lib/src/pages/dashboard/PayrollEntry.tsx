@@ -85,7 +85,7 @@ export function PayrollEntry() {
   const [otNdMult2, setOtNdMult2] = useState('0.10');
 
   useEffect(() => {
-    setHeaderInfo({ title: 'PAYROLL', subtitle: 'Payroll Management', searchPlaceholder: 'Search employee...' });
+    setHeaderInfo({ title: 'Payroll Data Entry', subtitle: 'Payroll Management', searchPlaceholder: 'Search...' });
   }, []);
 
   const recalcBasePay = useCallback(() => {

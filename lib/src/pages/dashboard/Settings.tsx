@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Moon, Sun, Monitor, SlidersHorizontal, Info } from 'lucide-react';
+import { Moon, Sun, Monitor, SlidersHorizontal, Info, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
@@ -9,6 +10,7 @@ import { useTheme } from './ThemeContext';
 export function Settings() {
   const { setHeaderInfo } = useHeader();
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setHeaderInfo({
@@ -19,8 +21,30 @@ export function Settings() {
     });
   }, []);
 
+  const handleLogout = () => {
+    // Navigate to login page
+    navigate('/login');
+  };
+
   return (
     <div className="space-y-6">
+
+      {/* Account */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <LogOut className="w-5 h-5 text-destructive" />
+            <CardTitle className="text-destructive">Account</CardTitle>
+          </div>
+          <CardDescription>Manage your account session.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button variant="destructive" onClick={handleLogout} className="w-full sm:w-auto">
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Theme */}
       <Card>
