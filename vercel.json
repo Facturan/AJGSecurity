@@ -1,5 +1,11 @@
 {
-    "buildCommand": "npm run build",
-    "outputDirectory": "lib/dist",
-    "framework": "vite"
+  "buildCommand": "npm run build",
+  "outputDirectory": "lib/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
