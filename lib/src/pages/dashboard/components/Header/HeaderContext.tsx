@@ -6,8 +6,28 @@ interface HeaderInfo {
     searchPlaceholder?: string;
     showSearch?: boolean;
     showPrimaryAction?: boolean;
-    primaryActionLabel?: string;
+    primaryActionLabel?: string | ReactNode;
     onPrimaryAction?: () => void;
+    onSearch?: (query: string) => void;
+
+    // New Action Buttons
+    showRefresh?: boolean;
+    onRefresh?: () => void;
+    showFilter?: boolean;
+    onFilter?: () => void;
+    showExport?: boolean;
+    onExport?: () => void;
+    isLoading?: boolean;
+
+    // Tabs Support
+    tabs?: {
+        id: string;
+        label: string;
+        isActive: boolean;
+        onClick: () => void;
+    }[];
+
+    hideHeader?: boolean;
 }
 
 interface HeaderContextType {

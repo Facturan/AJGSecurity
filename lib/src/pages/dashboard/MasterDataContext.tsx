@@ -1,124 +1,303 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { supabase } from '../../lib/supabase';
+import { toast } from 'sonner';
 
 type MasterDataContextType = {
   religions: string[];
-  positions: { name: string; code: string; level: string }[];
-  departments: { name: string; code: string; head: string }[];
+  positions: { name: string }[];
+  departments: { name: string }[];
   employeeStatuses: string[];
   firearmModels: string[];
   firearmCalibers: string[];
   firearmMakes: string[];
   firearmKinds: string[];
   firearmLicenses: string[];
-  addReligion: (name: string) => void;
-  addPosition: (name: string, code: string, level: string) => void;
-  addDepartment: (name: string, code: string, head: string) => void;
-  addEmployeeStatus: (name: string) => void;
-  addFirearmModel: (name: string) => void;
-  addFirearmCaliber: (name: string) => void;
-  addFirearmMake: (name: string) => void;
-  addFirearmKind: (name: string) => void;
-  addFirearmLicense: (name: string) => void;
+  loanTypes: { loanId: string; loanType: string }[];
+  overtimeRates: {
+    id?: number;
+    RateOTRegDay: number;
+    RateOTSunday: number;
+    RateOTSpecial: number;
+    RateOTLegal: number;
+    RateOTNDBase: number;
+    RateOTNDAdd: number;
+  } | null;
+  isLoading: boolean;
+  addReligion: (name: string) => Promise<void>;
+  addPosition: (name: string) => Promise<void>;
+  addDepartment: (name: string) => Promise<void>;
+  addEmployeeStatus: (name: string) => Promise<void>;
+  addFirearmModel: (name: string) => Promise<void>;
+  addFirearmCaliber: (name: string) => Promise<void>;
+  addFirearmMake: (name: string) => Promise<void>;
+  addFirearmKind: (name: string) => Promise<void>;
+  addFirearmLicense: (name: string) => Promise<void>;
+  addLoanType: (data: { loanId: string; loanType: string }) => Promise<void>;
+  deleteLoanType: (loanId: string) => Promise<void>;
+  updateOvertimeRates: (rates: { RateOTRegDay: number; RateOTSunday: number; RateOTSpecial: number; RateOTLegal: number; RateOTNDBase: number; RateOTNDAdd: number; }) => Promise<boolean | void>;
 };
-
-const defaultReligions = ['Catholic', 'Christian', 'Islam', 'Buddhism', 'Hinduism', 'Other'];
-const defaultPositions = [
-  { name: 'Manager', code: 'MGR', level: '5' },
-  { name: 'Supervisor', code: 'SUP', level: '4' },
-  { name: 'Staff', code: 'STF', level: '3' },
-  { name: 'Human Resources', code: 'HR', level: '3' },
-  { name: 'IT', code: 'IT', level: '3' },
-];
-const defaultDepartments = [
-  { name: 'Human Resources', code: 'HR', head: 'MARIA SANTOS' },
-  { name: 'IT', code: 'IT', head: 'JUAN DELA CRUZ' },
-  { name: 'Finance', code: 'FIN', head: 'ANA GARCIA' },
-  { name: 'Operations', code: 'OPS', head: 'PEDRO REYES' },
-  { name: 'Marketing', code: 'MKT', head: 'ANA GARCIA' },
-  { name: 'Sales', code: 'SLS', head: 'PEDRO REYES' },
-];
-const defaultEmployeeStatuses = ['Regular', 'Probationary', 'Contractual', 'Part-time', 'Project-based'];
-const defaultFirearmModels = ['Glock 17', 'Beretta M9', 'Colt 1911', 'Sig Sauer P320'];
-const defaultFirearmCalibers = ['9mm', '.45 ACP', '.40 S&W', '.380 ACP', '5.56x45mm'];
-const defaultFirearmMakes = ['Glock', 'Beretta', 'Colt', 'Sig Sauer', 'Smith & Wesson'];
-const defaultFirearmKinds = ['Pistol', 'Revolver', 'Rifle', 'Shotgun', 'Submachine Gun'];
-const defaultFirearmLicenses = ['Regular License', 'Special Permit', 'LTO', 'PTCFOR'];
 
 const MasterDataContext = createContext<MasterDataContextType | null>(null);
 
 export function MasterDataProvider({ children }: { children: React.ReactNode }) {
-  const [religions, setReligions] = useState<string[]>(defaultReligions);
-  const [positions, setPositions] = useState(defaultPositions);
-  const [departments, setDepartments] = useState(defaultDepartments);
-  const [employeeStatuses, setEmployeeStatuses] = useState<string[]>(defaultEmployeeStatuses);
-  const [firearmModels, setFirearmModels] = useState<string[]>(defaultFirearmModels);
-  const [firearmCalibers, setFirearmCalibers] = useState<string[]>(defaultFirearmCalibers);
-  const [firearmMakes, setFirearmMakes] = useState<string[]>(defaultFirearmMakes);
-  const [firearmKinds, setFirearmKinds] = useState<string[]>(defaultFirearmKinds);
-  const [firearmLicenses, setFirearmLicenses] = useState<string[]>(defaultFirearmLicenses);
+  const [religions, setReligions] = useState<string[]>([]);
+  const [positions, setPositions] = useState<{ name: string }[]>([]);
+  const [departments, setDepartments] = useState<{ name: string }[]>([]);
+  const [employeeStatuses, setEmployeeStatuses] = useState<string[]>([]);
+  const [firearmModels, setFirearmModels] = useState<string[]>([]);
+  const [firearmCalibers, setFirearmCalibers] = useState<string[]>([]);
+  const [firearmMakes, setFirearmMakes] = useState<string[]>([]);
+  const [firearmKinds, setFirearmKinds] = useState<string[]>([]);
+  const [firearmLicenses, setFirearmLicenses] = useState<string[]>([]);
+  const [loanTypes, setLoanTypes] = useState<{ loanId: string; loanType: string }[]>([]);
+  const [overtimeRates, setOvertimeRates] = useState<MasterDataContextType['overtimeRates']>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const addReligion = useCallback((name: string) => {
-    const trimmed = name.trim();
-    if (trimmed) {
-      setReligions((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+  const fetchMasterData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [
+        { data: rels },
+        { data: pos },
+        { data: depts },
+        { data: stats },
+        { data: fModels },
+        { data: fCalibers },
+        { data: fMakes },
+        { data: fKinds },
+        { data: lTypes },
+        { data: otRates, error: otError }
+      ] = await Promise.all([
+        supabase.from('RELIGION').select('ReligionList'),
+        supabase.from('EMPPOSITION').select('EmpPositionList'),
+        supabase.from('DEPARTMENTS').select('name'),
+        supabase.from('EMPLOYEE_STATUSES').select('name'),
+        supabase.from('FIREARM_MODELS').select('name'),
+        supabase.from('FIREARM_CALIBERS').select('name'),
+        supabase.from('FIREARM_MAKES').select('name'),
+        supabase.from('FIREARM_KINDS').select('name'),
+        supabase.from('LOAN_TYPES').select('loanId, loanType'),
+        supabase.from('OVERTIMERATE').select('*').limit(1),
+      ]);
+
+      if (rels) setReligions(rels.map(r => r.ReligionList));
+      if (pos) {
+        setPositions(pos.map((p: any) => ({
+          name: p.EmpPositionList || 'Unnamed Position'
+        })));
+      }
+      if (depts) setDepartments(depts);
+      if (stats) setEmployeeStatuses(stats.map(s => s.name));
+      if (fModels) setFirearmModels(fModels.map((f: any) => f.name));
+      if (fCalibers) setFirearmCalibers(fCalibers.map((f: any) => f.name));
+      if (fMakes) setFirearmMakes(fMakes.map((f: any) => f.name));
+      if (fKinds) setFirearmKinds(fKinds.map((f: any) => f.name));
+      if (lTypes) {
+        setLoanTypes(lTypes.map((lt: any) => ({
+          loanId: lt.loanId,
+          loanType: lt.loanType
+        })));
+      }
+      if (otRates && otRates.length > 0) {
+        setOvertimeRates(otRates[0]);
+      } else if (otRates) {
+        setOvertimeRates(null);
+      }
+
+      setFirearmLicenses(['Regular License', 'Special Permit', 'LTO', 'PTCFOR']);
+
+    } catch (error) {
+      console.error('Error fetching master data:', error);
+      toast.error('Failed to load master data');
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  const addPosition = useCallback((name: string, code: string, level: string) => {
+  useEffect(() => {
+    fetchMasterData();
+  }, [fetchMasterData]);
+
+  const addReligion = async (name: string) => {
     const trimmed = name.trim();
-    if (trimmed) {
-      setPositions((prev) =>
-        prev.some((p) => p.name === trimmed) ? prev : [...prev, { name: trimmed, code: code.trim() || trimmed.slice(0, 3).toUpperCase(), level: level.trim() || '0' }]
-      );
+    if (!trimmed) throw new Error("Name cannot be empty");
+    try {
+      const { error } = await supabase.from('RELIGION').insert([{ ReligionList: trimmed }]);
+      if (error) throw error;
+      setReligions(prev => [...prev, trimmed]);
+      toast.success('Religion added');
+    } catch (error: any) {
+      toast.error('Failed to add religion: ' + error.message);
+      throw error;
     }
-  }, []);
+  };
 
-  const addDepartment = useCallback((name: string, code: string, head: string) => {
+  const addPosition = async (name: string) => {
     const trimmed = name.trim();
-    if (trimmed) {
-      setDepartments((prev) =>
-        prev.some((d) => d.name === trimmed) ? prev : [...prev, { name: trimmed, code: code.trim() || trimmed.slice(0, 3).toUpperCase(), head: head.trim() }]
-      );
+    if (!trimmed) return;
+    const newPos = {
+      EmpPositionList: trimmed
+    };
+    try {
+      const { error } = await supabase.from('EMPPOSITION').insert([newPos]);
+      if (error) {
+        console.error('Supabase error adding position:', error);
+        throw error;
+      }
+      setPositions(prev => [...prev, { name: trimmed }]);
+      toast.success('Position added successfully');
+    } catch (error: any) {
+      console.error('Error adding position:', error);
+      toast.error('Failed to add position: ' + (error.message || 'Unknown error'));
+      throw error;
     }
-  }, []);
+  };
 
-  const addEmployeeStatus = useCallback((name: string) => {
+  const addDepartment = async (name: string) => {
     const trimmed = name.trim();
-    if (trimmed) {
-      setEmployeeStatuses((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+    if (!trimmed) throw new Error("Name cannot be empty");
+    const newDept = { name: trimmed };
+    try {
+      const { error } = await supabase.from('DEPARTMENTS').insert([newDept]);
+      if (error) throw error;
+      setDepartments(prev => [...prev, newDept]);
+      toast.success('Department added');
+    } catch (error: any) {
+      toast.error('Failed to add department: ' + error.message);
+      throw error;
     }
-  }, []);
+  };
 
-  const addFirearmModel = useCallback((name: string) => {
+  const addEmployeeStatus = async (name: string) => {
     const trimmed = name.trim();
-    if (trimmed) setFirearmModels((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
-  }, []);
+    if (!trimmed) throw new Error("Name cannot be empty");
+    try {
+      const { error } = await supabase.from('EMPLOYEE_STATUSES').insert([{ name: trimmed }]);
+      if (error) throw error;
+      setEmployeeStatuses(prev => [...prev, trimmed]);
+      toast.success('Status added');
+    } catch (error: any) {
+      toast.error('Failed to add status: ' + error.message);
+      throw error;
+    }
+  };
 
-  const addFirearmCaliber = useCallback((name: string) => {
+  const addFirearmModel = async (name: string) => {
     const trimmed = name.trim();
-    if (trimmed) setFirearmCalibers((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
-  }, []);
+    if (!trimmed) return;
+    try {
+      const { error } = await supabase.from('FIREARM_MODELS').insert([{ name: trimmed }]);
+      if (error) throw error;
+      setFirearmModels(prev => [...prev, trimmed]);
+      toast.success('Firearm model added');
+    } catch (error: any) {
+      toast.error('Failed to add firearm model: ' + error.message);
+    }
+  };
 
-  const addFirearmMake = useCallback((name: string) => {
+  const addFirearmCaliber = async (name: string) => {
     const trimmed = name.trim();
-    if (trimmed) setFirearmMakes((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
-  }, []);
+    if (!trimmed) return;
+    try {
+      const { error } = await supabase.from('FIREARM_CALIBERS').insert([{ name: trimmed }]);
+      if (error) throw error;
+      setFirearmCalibers(prev => [...prev, trimmed]);
+      toast.success('Firearm caliber added');
+    } catch (error: any) {
+      toast.error('Failed to add firearm caliber: ' + error.message);
+    }
+  };
 
-  const addFirearmKind = useCallback((name: string) => {
+  const addFirearmMake = async (name: string) => {
     const trimmed = name.trim();
-    if (trimmed) setFirearmKinds((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
-  }, []);
+    if (!trimmed) return;
+    try {
+      const { error } = await supabase.from('FIREARM_MAKES').insert([{ name: trimmed }]);
+      if (error) throw error;
+      setFirearmMakes(prev => [...prev, trimmed]);
+      toast.success('Firearm make added');
+    } catch (error: any) {
+      toast.error('Failed to add firearm make: ' + error.message);
+    }
+  };
 
-  const addFirearmLicense = useCallback((name: string) => {
+  const addFirearmKind = async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    try {
+      const { error } = await supabase.from('FIREARM_KINDS').insert([{ name: trimmed }]);
+      if (error) throw error;
+      setFirearmKinds(prev => [...prev, trimmed]);
+      toast.success('Firearm kind added');
+    } catch (error: any) {
+      toast.error('Failed to add firearm kind: ' + error.message);
+    }
+  };
+
+  const addFirearmLicense = async (name: string) => {
     const trimmed = name.trim();
     if (trimmed) setFirearmLicenses((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
-  }, []);
+  };
+
+  const addLoanType = async (data: { loanId: string; loanType: string }) => {
+    try {
+      const { error } = await supabase.from('LOAN_TYPES').insert([data]);
+      if (error) throw error;
+      setLoanTypes(prev => [...prev, data]);
+      toast.success('Loan type added');
+    } catch (error: any) {
+      toast.error('Failed to add loan type: ' + error.message);
+      throw error;
+    }
+  };
+ 
+  const deleteLoanType = async (loanId: string) => {
+    try {
+      const { error } = await supabase.from('LOAN_TYPES').delete().eq('loanId', loanId);
+      if (error) throw error;
+      setLoanTypes(prev => prev.filter(lt => lt.loanId !== loanId));
+      toast.success('Loan type deleted');
+    } catch (error: any) {
+      toast.error('Failed to delete loan type: ' + error.message);
+      throw error;
+    }
+  };
+
+  const updateOvertimeRates = async (rates: { RateOTRegDay: number; RateOTSunday: number; RateOTSpecial: number; RateOTLegal: number; RateOTNDBase: number; RateOTNDAdd: number; }) => {
+    try {
+      if (overtimeRates?.id) {
+        const { error } = await supabase.from('OVERTIMERATE').update(rates).eq('id', overtimeRates.id);
+        if (error) throw error;
+        setOvertimeRates({ ...overtimeRates, ...rates });
+      } else {
+        // Check if a row exists but we haven't loaded it properly (e.g. initial fetch failed)
+        const { data: existing } = await supabase.from('OVERTIMERATE').select('id').limit(1);
+        
+        if (existing && existing.length > 0) {
+          const { error } = await supabase.from('OVERTIMERATE').update(rates).eq('id', existing[0].id);
+          if (error) throw error;
+          setOvertimeRates({ id: existing[0].id, ...rates });
+        } else {
+          const { data, error } = await supabase.from('OVERTIMERATE').insert([rates]).select();
+          if (error) throw error;
+          if (data && data.length > 0) setOvertimeRates(data[0]);
+        }
+      }
+      toast.success('Overtime rates updated successfully');
+      return true;
+    } catch (error: any) {
+      console.error('Failed to update overtime rates:', error);
+      toast.error('Failed to update overtime rates: ' + error.message);
+      throw error;
+    }
+  };
 
   const value: MasterDataContextType = {
     religions,
     positions,
     departments,
     employeeStatuses,
+    isLoading,
     addReligion,
     addPosition,
     addDepartment,
@@ -128,11 +307,16 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
     firearmMakes,
     firearmKinds,
     firearmLicenses,
+    loanTypes,
+    overtimeRates,
     addFirearmModel,
     addFirearmCaliber,
     addFirearmMake,
     addFirearmKind,
     addFirearmLicense,
+    addLoanType,
+    deleteLoanType,
+    updateOvertimeRates,
   };
 
   return (

@@ -4,8 +4,12 @@ import { Dashboard } from "./dashboard/Dashboard";
 import { EmployeeRegistration } from "./dashboard/EmployeeRegistration";
 import { PayrollEntry } from "./dashboard/PayrollEntry";
 import { MasterData } from "./dashboard/MasterData";
+import { FirearmMasterData } from "./dashboard/FirearmMasterData";
 import { Settings } from "./dashboard/Settings";
 import { Company } from "./dashboard/Company";
+import { SetupTypeLoan } from "./dashboard/SetupTypeLoan";
+import { LoanProcessing } from "./dashboard/LoanProcessing";
+import { BorrowDataList } from "./dashboard/BorrowDataList";
 import { Login } from "./Login";
 
 function ErrorPage() {
@@ -41,6 +45,10 @@ export const router = createBrowserRouter([
       { path: "company/*", Component: Company },
       { path: "employee-registration", Component: EmployeeRegistration },
       { path: "payroll-entry", Component: PayrollEntry },
+      { path: "setup-type-loan", Component: SetupTypeLoan },
+      { path: "loan-processing", Component: LoanProcessing },
+      { path: "borrow-data-list", Component: BorrowDataList },
+      { path: "master-data/firearm-setup/*", Component: FirearmMasterData },
       { path: "master-data/*", Component: MasterData },
       { path: "settings", Component: Settings },
     ],

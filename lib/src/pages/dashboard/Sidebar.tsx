@@ -17,12 +17,16 @@ import {
     MapPin,
     Award,
     Clock,
-    Database
+    Database,
+    Menu,
+    X,
+    Receipt,
+    CreditCard
 } from 'lucide-react';
 import { PesoIcon } from './icons/PesoIcon';
 import React, { useState, useEffect } from 'react';
 import { Header, HeaderProvider } from './components/Header';
-import logo from '../../../../assets/image/logo.png';
+import logo from '../../../../assets/image/logo-4.png';
 
 interface ChildNavItem {
     to: string;
@@ -51,20 +55,37 @@ const navItems: NavItem[] = [
     },
     { to: '/employee-registration', label: 'Employee Registration Form', icon: UserPlus },
     { to: '/payroll-entry', label: 'Payroll Data Entry', icon: PesoIcon },
+    {
+        label: 'Loans',
+        icon: PesoIcon,
+        children: [
+            { to: '/loan-processing', label: 'Loan Processing', icon: CreditCard },
+            { to: '/borrow-data-list', label: 'Borrow Data List', icon: Users },
+            { to: '/setup-type-loan', label: 'Setup Type of Loan', icon: SlidersHorizontal },
+        ]
+    },
 
     {
-        label: 'Master Data',
+        label: 'Employee Master Data',
         icon: Database,
         children: [
             { to: '/master-data/employee-data-list', label: 'Employee Data List', icon: Users },
-            { to: '/master-data/position', label: 'Position', icon: Briefcase },
-            { to: '/master-data/department', label: 'Department', icon: Users2 },
-            { to: '/master-data/religion', label: 'Religion', icon: Award },
-            { to: '/master-data/overtime', label: 'Overtime', icon: Clock },
-            { to: '/master-data/rates', label: 'Rates', icon: PesoIcon },
-            { to: '/master-data/location', label: 'Location', icon: MapPin },
-            { to: '/master-data/status', label: 'Status', icon: Users2 },
-            { to: '/master-data/firearm-setup', label: 'Firearm Setup', icon: Target },
+            { to: '/master-data/position', label: 'Setup Position', icon: Briefcase },
+            { to: '/master-data/department', label: 'Setup Department', icon: Users2 },
+            { to: '/master-data/religion', label: 'Setup Religion', icon: Award },
+            { to: '/master-data/overtime', label: 'Setup Overtime Rate', icon: Clock },
+            { to: '/master-data/status', label: 'Setup Employee Status', icon: Users2 },
+        ]
+    },
+    {
+        label: 'Firearm Master Data',
+        icon: Target,
+        children: [
+            { to: '/master-data/firearm-setup/license', label: 'License Entry', icon: Award },
+            { to: '/master-data/firearm-setup/model', label: 'Setup Model', icon: Target },
+            { to: '/master-data/firearm-setup/caliber', label: 'Setup Caliber', icon: Target },
+            { to: '/master-data/firearm-setup/make', label: 'Setup Make', icon: Building2 },
+            { to: '/master-data/firearm-setup/kind', label: 'Setup Kind', icon: Target },
         ]
     },
     { to: '/settings', label: 'Settings', icon: Settings },
@@ -93,6 +114,7 @@ function SidebarInner() {
         }
     });
     const [isHovered, setIsHovered] = useState(false);
+    const [mobileOpen, setMobileOpen] = useState(false);
     const isExpanded = !collapsed || isHovered;
 
     // Track which parent menus are open
@@ -102,8 +124,13 @@ function SidebarInner() {
         if (location.pathname.startsWith('/company')) {
             initialStates['Company'] = true;
         }
-        if (location.pathname.startsWith('/master-data')) {
-            initialStates['Master Data'] = true;
+        if (location.pathname.startsWith('/master-data/firearm-setup')) {
+            initialStates['Firearm Master Data'] = true;
+        } else if (location.pathname.startsWith('/master-data')) {
+            initialStates['Employee Master Data'] = true;
+        }
+        if (location.pathname.startsWith('/loan-ledger') || location.pathname.startsWith('/setup-type-loan') || location.pathname.startsWith('/loan-processing') || location.pathname.startsWith('/borrow-data-list')) {
+            initialStates['Loans'] = true;
         }
         return initialStates;
     });
@@ -130,21 +157,39 @@ function SidebarInner() {
         }));
     };
 
+    // Close mobile menu on route change
+    useEffect(() => {
+        setMobileOpen(false);
+    }, [location.pathname]);
+
     const sidebarWidth = isExpanded ? 256 : 72;
 
     return (
         <div className="flex h-screen w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+            {/* Mobile Sidebar Overlay */}
+            {mobileOpen && (
+                <div
+                    className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden transition-opacity duration-300"
+                    onClick={() => setMobileOpen(false)}
+                />
+            )}
+
+            {/* Sidebar */}
             <aside
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="flex flex-col shadow-2xl flex-shrink-0 z-20 bg-white dark:bg-slate-800 transition-all duration-300 ease-in-out overflow-hidden"
-                style={{ width: sidebarWidth }}
+                className={`
+                    flex flex-col shadow-2xl flex-shrink-0 z-40 bg-white dark:bg-slate-800 transition-all duration-300 ease-in-out overflow-hidden
+                    fixed inset-y-0 left-0 lg:relative lg:translate-x-0
+                    ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                `}
+                style={{ width: mobileOpen ? 280 : sidebarWidth }}
             >
                 <div
                     className={`flex items-center justify-center border-b border-slate-200 dark:border-slate-700 flex-shrink-0 h-16 ${!isExpanded ? 'px-2' : 'justify-start px-4'}`}
                 >
                     <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-md overflow-hidden flex items-center justify-center flex-shrink-0">
                             <img src={logo} alt="HRIS Logo" className="w-full h-full object-cover" />
                         </div>
                         {isExpanded && (
@@ -245,7 +290,7 @@ function SidebarInner() {
                     ) : (
                         <div className="flex items-end justify-between w-full">
                             <div className="flex flex-col">
-                                <p className="text-slate-700 dark:text-slate-300 text-xs font-semibold">DreamTeam I.T. Solutions</p>
+                                <p className="text-slate-700 dark:text-slate-300 text-xs font-semibold">DT I.T. Solutions & Consultancy</p>
                                 <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5">Version 2.1.7</p>
                                 <p className="text-slate-500 dark:text-slate-400 text-[10px] mt-0.5">{liveDate}</p>
                             </div>
@@ -262,12 +307,30 @@ function SidebarInner() {
             </aside>
 
             {/* Main Section (Header + Content) */}
-            <div className="flex flex-col flex-1 overflow-hidden">
-                {/* Unified Top Header - Hidden on Dashboard */}
-                {!isDashboard && <Header />}
+            <div className="flex flex-col flex-1 overflow-hidden w-full">
+                {/* Mobile Top Nav */}
+                <div className="lg:hidden h-16 flex items-center justify-between px-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 z-20">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-md overflow-hidden">
+                            <img src={logo} alt="Logo" className="w-full h-full object-cover" />
+                        </div>
+                        <span className="font-bold text-slate-900 dark:text-white">HRIS</span>
+                    </div>
+                    <button
+                        onClick={() => setMobileOpen(!mobileOpen)}
+                        className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
+                </div>
+
+                {/* Unified Top Header (Desktop only or adjusted) */}
+                <div className="hidden lg:block">
+                    <Header />
+                </div>
 
                 {/* Main Content */}
-                <main className="flex-1 overflow-y-auto p-8 relative">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
                     <Outlet />
                 </main>
             </div>
@@ -277,8 +340,6 @@ function SidebarInner() {
 
 export function Sidebar() {
     return (
-        <HeaderProvider>
-            <SidebarInner />
-        </HeaderProvider>
+        <SidebarInner />
     );
 }

@@ -53,7 +53,6 @@ export function Company() {
         const fetchCompanyData = async () => {
             setIsLoading(true);
             try {
-                // Fetch the first company record (assuming single-tenant setup for the company profile)
                 const { data, error } = await supabase
                     .from('COMPANY')
                     .select('*')
@@ -62,7 +61,6 @@ export function Company() {
                     .single();
 
                 if (error && error.code !== 'PGRST116') {
-                    // PGRST116 means no rows found, which is fine for initial empty state
                     console.error('Error fetching company data:', error);
                 } else if (data) {
                     setCompanyData({
@@ -167,26 +165,26 @@ export function Company() {
                     </CardHeader>
                     <CardContent className="pt-6 space-y-6">
                         <div className="space-y-4 max-w-4xl">
-                            <div className="grid grid-cols-[140px_1fr] items-center gap-4">
-                                <Label htmlFor="customerName" className="text-right font-medium text-slate-600">Customer Name</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                <Label htmlFor="customerName" className="sm:text-right font-medium text-slate-600">Customer Name</Label>
                                 <Input id="customerName" className="h-9 focus-visible:ring-slate-400" placeholder="Enter customer full name" />
                             </div>
-                            <div className="grid grid-cols-[140px_1fr] items-start gap-4">
-                                <Label htmlFor="houseNo" className="text-right font-medium text-slate-600 pt-2">House No./ Street</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start gap-2 sm:gap-4">
+                                <Label htmlFor="houseNo" className="sm:text-right font-medium text-slate-600 pt-2">Complete Address</Label>
                                 <Input id="houseNo" className="h-20 focus-visible:ring-slate-400" placeholder="Enter complete address" />
                             </div>
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="grid grid-cols-[140px_1fr] items-center gap-4">
-                                    <Label htmlFor="custTel" className="text-right font-medium text-slate-600 text-sm">Telephone No.</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                    <Label htmlFor="custTel" className="sm:text-right font-medium text-slate-600 text-sm">Telephone No.</Label>
                                     <Input id="custTel" className="h-9 focus-visible:ring-slate-400" placeholder="0000-000" />
                                 </div>
-                                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-                                    <Label htmlFor="custMobile" className="text-right font-medium text-slate-600 text-sm">Mobile No.</Label>
+                                <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                    <Label htmlFor="custMobile" className="sm:text-right font-medium text-slate-600 text-sm">Mobile No.</Label>
                                     <Input id="custMobile" className="h-9 focus-visible:ring-slate-400" placeholder="09XX-XXX-XXXX" />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-[140px_1fr] items-center gap-4">
-                                <Label htmlFor="custEmail" className="text-right font-medium text-slate-600">E-mail Address</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                <Label htmlFor="custEmail" className="sm:text-right font-medium text-slate-600">E-mail Address</Label>
                                 <Input id="custEmail" className="h-9 focus-visible:ring-slate-400" placeholder="customer@example.com" />
                             </div>
                         </div>
@@ -221,8 +219,8 @@ export function Company() {
 
                         {/* Top Section */}
                         <div className="space-y-4 max-w-4xl">
-                            <div className="grid grid-cols-[140px_1fr] items-center gap-4">
-                                <Label htmlFor="companyName" className="text-right font-medium text-slate-600">Company Name</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                <Label htmlFor="companyName" className="sm:text-right font-medium text-slate-600">Company Name</Label>
                                 <Input
                                     id="companyName"
                                     className="h-9 focus-visible:ring-slate-400"
@@ -230,8 +228,8 @@ export function Company() {
                                     onChange={(e) => handleChange('CompanyName', e.target.value)}
                                 />
                             </div>
-                            <div className="grid grid-cols-[140px_1fr] items-start gap-4">
-                                <Label htmlFor="companyAddress" className="text-right font-medium text-slate-600 pt-2">Complete Address</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start gap-2 sm:gap-4">
+                                <Label htmlFor="companyAddress" className="sm:text-right font-medium text-slate-600 pt-2">Complete Address</Label>
                                 <Input
                                     id="companyAddress"
                                     className="h-20 focus-visible:ring-slate-400"
@@ -239,9 +237,9 @@ export function Company() {
                                     onChange={(e) => handleChange('CompanyAdd', e.target.value)}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-8">
-                                <div className="grid grid-cols-[140px_1fr] items-center gap-4">
-                                    <Label htmlFor="telNo" className="text-right font-medium text-slate-600 text-sm">Telephone No.</Label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                                <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                    <Label htmlFor="telNo" className="sm:text-right font-medium text-slate-600 text-sm">Telephone No.</Label>
                                     <Input
                                         id="telNo"
                                         className="h-9 focus-visible:ring-slate-400"
@@ -249,8 +247,8 @@ export function Company() {
                                         onChange={(e) => handleChange('Telephone', e.target.value)}
                                     />
                                 </div>
-                                <div className="grid grid-cols-[120px_1fr] items-center gap-4">
-                                    <Label htmlFor="mobileNo" className="text-right font-medium text-slate-600 text-sm">Mobile No.</Label>
+                                <div className="grid grid-cols-1 sm:grid-cols-[120px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                    <Label htmlFor="mobileNo" className="sm:text-right font-medium text-slate-600 text-sm">Mobile No.</Label>
                                     <Input
                                         id="mobileNo"
                                         className="h-9 focus-visible:ring-slate-400"
@@ -259,8 +257,8 @@ export function Company() {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-[140px_1fr] items-center gap-4">
-                                <Label htmlFor="email" className="text-right font-medium text-slate-600">E-mail Address</Label>
+                            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                <Label htmlFor="email" className="sm:text-right font-medium text-slate-600">E-mail Address</Label>
                                 <Input
                                     id="email"
                                     className="h-9 focus-visible:ring-slate-400"
@@ -276,24 +274,24 @@ export function Company() {
                             <div className="space-y-4">
                                 <h3 className="text-sm font-semibold text-slate-900 border-l-4 border-slate-300 pl-2 mb-4">Personnel & Branding</h3>
                                 <div className="space-y-3">
-                                    <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                                        <Label className="text-right text-sm font-medium text-slate-500">Prepared By</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                        <Label className="sm:text-right text-sm font-medium text-slate-500">Prepared By</Label>
                                         <Input
                                             className="h-8 text-sm focus-visible:ring-slate-400"
                                             value={companyData.PreparedBy}
                                             onChange={(e) => handleChange('PreparedBy', e.target.value)}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                                        <Label className="text-right text-sm font-medium text-slate-500">Approved By</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                        <Label className="sm:text-right text-sm font-medium text-slate-500">Approved By</Label>
                                         <Input
                                             className="h-8 text-sm focus-visible:ring-slate-400"
                                             value={companyData.ApprovedBy}
                                             onChange={(e) => handleChange('ApprovedBy', e.target.value)}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                                        <Label className="text-right text-sm font-medium text-slate-500">Noted By</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                        <Label className="sm:text-right text-sm font-medium text-slate-500">Noted By</Label>
                                         <Input
                                             className="h-8 text-sm focus-visible:ring-slate-400"
                                             value={companyData.NotedBy}
@@ -386,40 +384,40 @@ export function Company() {
                             <div className="space-y-4">
                                 <h3 className="text-sm font-semibold text-slate-900 border-l-4 border-slate-300 pl-2 mb-4">Registration Numbers</h3>
                                 <div className="space-y-3">
-                                    <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                                        <Label className="text-right text-sm font-medium text-slate-500">SSS No</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                        <Label className="sm:text-right text-sm font-medium text-slate-500">SSS No</Label>
                                         <Input
                                             className="h-8 text-sm focus-visible:ring-slate-400 font-mono"
                                             value={companyData.SSS}
                                             onChange={(e) => handleChange('SSS', e.target.value)}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                                        <Label className="text-right text-sm font-medium text-slate-500">PHIC No</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                        <Label className="sm:text-right text-sm font-medium text-slate-500">PHIC No</Label>
                                         <Input
                                             className="h-8 text-sm focus-visible:ring-slate-400 font-mono"
                                             value={companyData.PHIC}
                                             onChange={(e) => handleChange('PHIC', e.target.value)}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                                        <Label className="text-right text-sm font-medium text-slate-500">HDMF No</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                        <Label className="sm:text-right text-sm font-medium text-slate-500">HDMF No</Label>
                                         <Input
                                             className="h-8 text-sm focus-visible:ring-slate-400 font-mono"
                                             value={companyData.HDMF}
                                             onChange={(e) => handleChange('HDMF', e.target.value)}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                                        <Label className="text-right text-sm font-medium text-slate-500">TIN</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                        <Label className="sm:text-right text-sm font-medium text-slate-500">TIN</Label>
                                         <Input
                                             className="h-8 text-sm focus-visible:ring-slate-400 font-mono"
                                             value={companyData.TIN}
                                             onChange={(e) => handleChange('TIN', e.target.value)}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-[100px_1fr] items-center gap-4">
-                                        <Label className="text-right text-sm font-medium text-slate-500">RDO Code</Label>
+                                    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] items-start sm:items-center gap-2 sm:gap-4">
+                                        <Label className="sm:text-right text-sm font-medium text-slate-500">RDO Code</Label>
                                         <Input
                                             className="h-8 text-sm focus-visible:ring-slate-400 font-mono"
                                             value={companyData.RDOCode}

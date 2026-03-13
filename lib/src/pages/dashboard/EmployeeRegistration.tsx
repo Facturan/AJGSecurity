@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Upload, Save, Search, Trash2, Plus, Loader2 } from 'lucide-react';
+import { useSearchParams } from 'react-router';
+import { UserPlus, Upload, Save, Search, Trash2, Plus, Loader2, RefreshCcw, Eye, Calendar as CalendarIcon, CheckCircle2, XCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -12,6 +13,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useHeader } from './components/Header';
 import { useMasterData } from './MasterDataContext';
 import { supabase } from '../../lib/supabase';
+import { DatePicker } from './ui/date-picker';
+import { Controller } from 'react-hook-form';
+import { cn } from './ui/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface EmployeeData {
   EmplID: number;
@@ -60,6 +66,8 @@ interface EmployeeData {
   OTSpecial: number;
   OTLegal: number;
   OTNightDiff: number;
+  OTNDBase: number;
+  OTNDAdd: number;
   MempHDMF: number;
   MempSSS: number;
   MempPHIC: number;
@@ -86,17 +94,25 @@ interface EmployeeData {
 }
 
 export function EmployeeRegistration() {
+  const [searchParams] = useSearchParams();
   const { setHeaderInfo } = useHeader();
-  const { religions, positions, departments, employeeStatuses } = useMasterData();
+  const { religions, positions, departments, employeeStatuses, overtimeRates } = useMasterData();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isViewOnly, setIsViewOnly] = useState(false);
+  const [isLoadingEmployee, setIsLoadingEmployee] = useState(false);
   const [employeePhoto, setEmployeePhoto] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [heightFt, setHeightFt] = useState('');
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [isErrorOpen, setIsErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const { register, handleSubmit, setValue, watch, reset } = useForm<EmployeeData>({
+  const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<EmployeeData>({
     defaultValues: {
-      EmplID: Date.now(),
+      EmplID: '' as any,
       idno: '',
       Fname: '', MName: '', LName: '',
-      Bdate: new Date().toISOString().split('T')[0],
+      Bdate: '',
       BloodType: '', Age: '', CivilStatus: '', Gender: '', Religion: '',
       heightCm: '', weightLb: '',
       ContactNo: '', EmailAdd: '', CAddress: '', PAddress: '',
@@ -106,18 +122,90 @@ export function EmployeeRegistration() {
       EmpRate: 'monthly',
       MonthlyRate: 0, DailyRate: 0, HourRate: 0, Allowance: 0,
       CardNumber: '', BankAccount: '', BankType: '',
-      DTHired: new Date().toISOString().split('T')[0],
+      DTHired: '',
       EmpStatus: '', Position: '', Department: '', JobDescription: '', QuitClaim: 'no',
-      OTRegDay: 0, OTSunday: 0, OTSpecial: 0, OTLegal: 0, OTNightDiff: 0,
-      MempHDMF: 0, MempSSS: 0, MempPHIC: 0,
-      MComHDMF: 0, MComSSS: 0, MComPHIC: 0,
+      OTRegDay: '' as any, OTSunday: '' as any, OTSpecial: '' as any, OTLegal: '' as any, OTNightDiff: '' as any,
+      OTNDBase: '' as any, OTNDAdd: '' as any,
+      MempHDMF: '' as any, MempSSS: '' as any, MempPHIC: '' as any,
+      MComHDMF: '' as any, MComSSS: '' as any, MComPHIC: '' as any,
       HDMF: '', PHIC: '', SSS: '', TIN: '',
       LevelType: '', School: '', Course: '', EducAddress: '',
-      DTYearGrad: new Date().toISOString().split('T')[0],
+      DTYearGrad: '',
       IDControlNo: '', Locator: '', IssueAt: '', OPNo: '',
-      DTIssue: new Date().toISOString().split('T')[0], DTPaid: new Date().toISOString().split('T')[0], DTApproved: new Date().toISOString().split('T')[0], DTExpiry: new Date().toISOString().split('T')[0]
+      DTIssue: '', DTPaid: '', DTApproved: '', DTExpiry: ''
     }
   });
+
+  const loadEmployeeData = (data: any) => {
+    const heightCmNum = parseFloat(data.heightCm) || 0;
+    if (heightCmNum > 0) {
+      const totalInches = heightCmNum / 2.54;
+      const ft = Math.floor(totalInches / 12);
+      const inches = Math.round(totalInches % 12);
+      setHeightFt(`${ft}'${inches}`);
+    } else {
+      setHeightFt('');
+    }
+
+    reset({
+      ...data,
+      MonthlyRate: data.MonthlyRate || 0,
+      DailyRate: data.DailyRate || 0,
+      HourRate: data.HourRate || 0,
+      Allowance: data.Allowance || 0,
+    });
+    setEmployeePhoto(null);
+    setIsEditing(true);
+  };
+
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) return;
+    setIsLoadingEmployee(true);
+    try {
+      const isNumeric = /^\d+$/.test(query);
+      const { data, error } = await supabase
+        .from('EMPDETAILS')
+        .select('*')
+        .or(isNumeric ? `EmplID.eq.${query},idno.eq.${query}` : `idno.eq.${query}`)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        loadEmployeeData(data);
+        toast.success('Employee data loaded');
+      } else {
+        toast.error('Employee not found');
+      }
+    } catch (error: any) {
+      console.error('Search error:', error);
+      toast.error('Search failed: ' + error.message);
+    } finally {
+      setIsLoadingEmployee(false);
+    }
+  };
+
+  useEffect(() => {
+    const id = searchParams.get('id');
+    const view = searchParams.get('view');
+
+    if (id) {
+      handleSearch(id);
+      if (view === 'true') {
+        setIsViewOnly(true);
+      }
+    }
+  }, [searchParams]);
+
+  const generateRandomID = () => {
+    const random = Math.floor(100000 + Math.random() * 900000);
+    return `EMP-${random}`;
+  };
+
+  const generateNumericID = () => {
+    // Generate a numeric ID based on timestamp and randomness to ensure uniqueness
+    // Supabase bigint or int columns can handle these
+    return Date.now() + Math.floor(Math.random() * 1000);
+  };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -131,608 +219,971 @@ export function EmployeeRegistration() {
   };
 
   const onSubmit = async (data: any) => {
+    console.log('Submission started with data:', data);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('You must be logged in to save employee data');
+      return;
+    }
+
+    if (isViewOnly) {
+      toast.error('Cannot save in view-only mode');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      // Conversions
-      const heightCm = parseFloat(data.heightCm) || 0;
-      const totalInches = heightCm / 2.54;
-      const feet = Math.floor(totalInches / 12);
-      const inches = Math.round(totalInches % 12);
-      const kilos = Math.round((parseFloat(data.weightLb) || 0) * 0.453592);
+      // Numerical conversions and object preparation
+      const { EmplID, ...rest } = data;
 
-      const dbData = {
-        ...data,
-        Feet: feet,
-        Inch: inches,
-        Kilos: kilos,
-        Path: 'photo_' + data.EmplID // Placeholder for path since base64 is too long for varchar(100)
+      // Parse EmplID carefully - it could be string or number, and might contain 'EMP-'
+      const rawEmplID = String(EmplID).replace(/\D/g, ''); // Removes all non-numeric characters like "EMP-"
+      const parsedEmplID = parseInt(rawEmplID);
+
+      if (isNaN(parsedEmplID) || rawEmplID === '') {
+        throw new Error('Invalid Employee ID. Please ensure it contains numeric values.');
+      }
+
+      const dbData: any = {
+        ...rest,
+        EmplID: parsedEmplID,
+        // Ensure all numerical fields are actually numbers or null
+        Age: parseInt(String(data.Age)) || 0,
+        MonthlyRate: parseFloat(String(data.MonthlyRate)) || 0,
+        DailyRate: parseFloat(String(data.DailyRate)) || 0,
+        HourRate: parseFloat(String(data.HourRate)) || 0,
+        Allowance: parseFloat(String(data.Allowance)) || 0,
+        OTRegDay: parseFloat(String(data.OTRegDay)) || 0,
+        OTSunday: parseFloat(String(data.OTSunday)) || 0,
+        OTSpecial: parseFloat(String(data.OTSpecial)) || 0,
+        OTLegal: parseFloat(String(data.OTLegal)) || 0,
+        OTNightDiff: parseFloat(String(data.OTNightDiff)) || 0,
+        OTNDBase: parseFloat(String(data.OTNDBase)) || 0,
+        OTNDAdd: parseFloat(String(data.OTNDAdd)) || 0,
+        MempHDMF: parseFloat(String(data.MempHDMF)) || 0,
+        MempSSS: parseFloat(String(data.MempSSS)) || 0,
+        MempPHIC: parseFloat(String(data.MempPHIC)) || 0,
+        MComHDMF: parseFloat(String(data.MComHDMF)) || 0,
+        MComSSS: parseFloat(String(data.MComSSS)) || 0,
+        MComPHIC: parseFloat(String(data.MComPHIC)) || 0,
+        heightCm: parseFloat(String(data.heightCm)) || 0,
+        weightLb: parseFloat(String(data.weightLb)) || 0,
       };
 
-      // Remove UI-only fields or fields not in DB
-      delete dbData.heightCm;
-      delete dbData.weightLb;
-      delete dbData.Age;
-
-      // Remove idno if empty to allow auto-generation
-      if (!dbData.idno) delete dbData.idno;
+      console.log('Sending data to Supabase:', dbData);
 
       const { error } = await supabase
         .from('EMPDETAILS')
-        .insert([dbData]);
+        .upsert([dbData], {
+          onConflict: 'EmplID',
+          ignoreDuplicates: false
+        });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase Upsert Error:', error);
+        throw error;
+      }
 
-      toast.success('Employee registered successfully!');
-      reset();
-      setEmployeePhoto(null);
+      setIsSuccessOpen(true);
+      // Removed toast.success here as we are using the dialog now
+
+      // If we just registered a new employee, we might want to refresh the view to "edit mode" with the new ID
+      // or just reset the form. For now, we'll reset if not editing.
+      if (!isEditing) {
+        reset();
+        setEmployeePhoto(null);
+        setHeightFt('');
+      }
     } catch (error: any) {
       console.error('Error saving employee:', error);
-      toast.error('Failed to register employee: ' + error.message);
+      setErrorMessage('Failed to save employee: ' + error.message);
+      setIsErrorOpen(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Auto-calculate age when birthdate changes
+  const bdate = watch('Bdate');
+  useEffect(() => {
+    if (bdate) {
+      const birth = new Date(bdate);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      if (age >= 0) setValue('Age', String(age));
+    }
+  }, [bdate, setValue]);
+
+  // Auto-generate IDs for new employees
+  useEffect(() => {
+    if (!isEditing) {
+      if (!watch('idno')) {
+        setValue('idno', generateRandomID());
+      }
+      if (!watch('EmplID')) {
+        setValue('EmplID', generateNumericID());
+      }
+    }
+  }, [isEditing, setValue, watch]);
+
+  // Auto-calculate rates (Daily, Hour)
+  const monthlyRate = watch('MonthlyRate');
+  const dRate = watch('DailyRate');
+  const allowance = watch('Allowance');
+
+  useEffect(() => {
+    if (monthlyRate > 0) {
+      const daily = monthlyRate / 26;
+      const hourly = daily / 8;
+      setValue('DailyRate', parseFloat(daily.toFixed(2)));
+      setValue('HourRate', parseFloat(hourly.toFixed(2)));
+    }
+  }, [monthlyRate, setValue]);
+
+  useEffect(() => {
+    if (dRate > 0 && !monthlyRate) {
+      const hourly = dRate / 8;
+      setValue('HourRate', parseFloat(hourly.toFixed(2)));
+    }
+  }, [dRate, monthlyRate, setValue]);
+
+  // Auto-fill global rates if they are missing
+  useEffect(() => {
+    if (overtimeRates) {
+      // Check if any overtime fields are empty/zero and fill them
+      const otReg = watch('OTRegDay');
+      const otSun = watch('OTSunday');
+      const otSpec = watch('OTSpecial');
+      const otLeg = watch('OTLegal');
+      const otNDB = watch('OTNDBase');
+      const otNDA = watch('OTNDAdd');
+
+      if (!otReg) setValue('OTRegDay', overtimeRates.RateOTRegDay);
+      if (!otSun) setValue('OTSunday', overtimeRates.RateOTSunday);
+      if (!otSpec) setValue('OTSpecial', overtimeRates.RateOTSpecial);
+      if (!otLeg) setValue('OTLegal', overtimeRates.RateOTLegal);
+      if (!otNDB) setValue('OTNDBase', overtimeRates.RateOTNDBase);
+      if (!otNDA) setValue('OTNDAdd', overtimeRates.RateOTNDAdd);
+    }
+  }, [overtimeRates, setValue, watch]);
+
   useEffect(() => {
     setHeaderInfo({
-      title: 'Employee Registration Form',
+      title: isEditing ? (isViewOnly ? 'View Employee Details' : 'Edit Employee Details') : 'Employee Registration Form',
       subtitle: 'Employee Management',
-      searchPlaceholder: 'Search...',
       showSearch: false,
-      showPrimaryAction: true,
-      primaryActionLabel: isSubmitting ? 'Adding...' : 'ADD',
-      onPrimaryAction: handleSubmit(onSubmit),
+      showPrimaryAction: !isViewOnly,
+      primaryActionLabel: isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'UPDATE RECORD' : 'SAVE EMPLOYEE'),
+      onPrimaryAction: () => {
+        console.log('Header Primary Action Triggered');
+        handleSubmit(onSubmit, (validationErrors) => {
+          console.error('Form Validation Errors:', validationErrors);
+          setErrorMessage('Please fill in all required fields marked with *');
+          setIsErrorOpen(true);
+        })();
+      },
+      isLoading: isSubmitting
     });
-  }, [isSubmitting]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSubmitting, isEditing, isViewOnly, setHeaderInfo]);
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Form - 2 columns */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Employee Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Employee Details</CardTitle>
-              <CardDescription>Personal information and identification</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="employeeId">Employee ID</Label>
-                  <Input id="employeeId" {...register('EmplID')} readOnly />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="idNumber">ID Number</Label>
-                  <Input id="idNumber" {...register('idno')} placeholder="Enter ID number" />
-                </div>
-              </div>
+      <form onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+        console.error('Form Validation Errors:', validationErrors);
+        setErrorMessage('Please fill in all required fields marked with *');
+        setIsErrorOpen(true);
+      })} className="space-y-6">
+        {isViewOnly && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-4 mb-4">
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 font-bold" />
+              <p className="text-sm font-bold uppercase tracking-wider">Read Only Mode</p>
+            </div>
+            <div className="h-4 w-[1px] bg-blue-200 ml-2" />
+            <p className="text-xs font-medium text-blue-600">You are viewing this record. Updates are disabled.</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="ml-auto text-blue-700 border-blue-300 hover:bg-blue-600 hover:text-white transition-all font-bold"
+              onClick={() => setIsViewOnly(false)}
+            >
+              ENABLE EDITING
+            </Button>
+          </div>
+        )}
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" {...register('Fname')} placeholder="First name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="middleName">Middle Name</Label>
-                  <Input id="middleName" {...register('MName')} placeholder="Middle name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" {...register('LName')} placeholder="Last name" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input id="dateOfBirth" type="date" {...register('Bdate')} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bloodType">Blood Type</Label>
-                  <Select onValueChange={(val) => setValue('BloodType', val)} value={watch('BloodType') as string}>
-                    <SelectTrigger id="bloodType">
-                      <SelectValue placeholder="Select blood type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="A+">A+</SelectItem>
-                      <SelectItem value="A-">A-</SelectItem>
-                      <SelectItem value="B+">B+</SelectItem>
-                      <SelectItem value="B-">B-</SelectItem>
-                      <SelectItem value="AB+">AB+</SelectItem>
-                      <SelectItem value="AB-">AB-</SelectItem>
-                      <SelectItem value="O+">O+</SelectItem>
-                      <SelectItem value="O-">O-</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="age">Age</Label>
-                  <Input id="age" type="number" placeholder="Age" {...register('Age')} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="civilStatus">Civil Status</Label>
-                  <Select onValueChange={(val) => setValue('CivilStatus', val)} value={watch('CivilStatus') as string}>
-                    <SelectTrigger id="civilStatus">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="married">Married</SelectItem>
-                      <SelectItem value="widowed">Widowed</SelectItem>
-                      <SelectItem value="separated">Separated</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
-                  <Input id="gender" {...register('Gender')} placeholder="Enter or select gender" list="gender-list" />
-                  <datalist id="gender-list">
-                    <option value="Male" />
-                    <option value="Female" />
-                  </datalist>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="religion">Religion</Label>
-                  <Input id="religion" {...register('Religion')} placeholder="Enter or select religion" list="religion-list" />
-                  <datalist id="religion-list">
-                    {religions.map((r) => (
-                      <option key={r} value={r} />
-                    ))}
-                  </datalist>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="heightCm">Height (cm)</Label>
-                  <Input id="heightCm" {...register('heightCm')} type="text" inputMode="decimal" placeholder="Enter height" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="weightLb">Weight (lb)</Label>
-                  <Input id="weightLb" {...register('weightLb')} type="text" inputMode="decimal" placeholder="Enter weight" />
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <h4 className="text-sm font-semibold mb-3">Contact / Address Information</h4>
-                <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Form - Left Columns (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Employee Details</CardTitle>
+                <CardDescription>Personal information and identification</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="contactNo">Contact No.</Label>
-                    <Input id="contactNo" {...register('ContactNo')} placeholder="Phone number" />
+                    <Label htmlFor="employeeId">Employee ID <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="employeeId"
+                      {...register('EmplID', { required: true })}
+                      placeholder="Enter Employee ID"
+                      disabled={isViewOnly}
+                      className={cn(errors.EmplID && "border-red-500 focus-visible:ring-red-500")}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="emailAdd">Email Address</Label>
-                    <Input id="emailAdd" type="email" {...register('EmailAdd')} placeholder="your@gmail.com" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentAddress">Current Address</Label>
-                    <Textarea id="currentAddress" {...register('CAddress')} placeholder="Enter current address" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="permanentAddress">Permanent Address</Label>
-                    <Textarea id="permanentAddress" {...register('PAddress')} placeholder="Enter permanent address" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-
-          {/* Parents Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Parents Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fatherName">Father's Name</Label>
-                  <Input id="fatherName" {...register('FatherName')} placeholder="Father's name" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="motherName">Mother's Name</Label>
-                  <Input id="motherName" {...register('MotherName')} placeholder="Mother's name" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fatherOccupation">Father's Occupation</Label>
-                  <Input id="fatherOccupation" {...register('FOccupation')} placeholder="Occupation" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="motherOccupation">Mother's Occupation</Label>
-                  <Input id="motherOccupation" {...register('MOccupation')} placeholder="Occupation" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fatherContact">Father's Contact No.</Label>
-                  <Input id="fatherContact" {...register('FContact')} placeholder="Contact number" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="motherContact">Mother's Contact No.</Label>
-                  <Input id="motherContact" {...register('MContact')} placeholder="Contact number" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="fatherAddress">Father's Address</Label>
-                  <Textarea id="fatherAddress" {...register('FAddress')} placeholder="Address" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="motherAddress">Mother's Address</Label>
-                  <Textarea id="motherAddress" {...register('MAddress')} placeholder="Address" />
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <h4 className="text-sm font-semibold mb-3">In Case of Emergency</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="emergencyPerson">Contact Person</Label>
-                    <Input id="emergencyPerson" {...register('ECPerson')} placeholder="Name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="emergencyContactNo">Contact No.</Label>
-                    <Input id="emergencyContactNo" {...register('ECNo')} placeholder="Phone number" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Contributions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Tabs defaultValue="monthly">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
-                  <TabsTrigger value="yearly">Yearly</TabsTrigger>
-                </TabsList>
-                <TabsContent value="monthly" className="space-y-4 mt-4">
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>HDMF Employee</Label>
-                        <Input type="number" step="0.01" {...register('MempHDMF')} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>HDMF Employer</Label>
-                        <Input type="number" step="0.01" {...register('MComHDMF')} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>SSS Employee</Label>
-                        <Input type="number" step="0.01" {...register('MempSSS')} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>SSS Employer</Label>
-                        <Input type="number" step="0.01" {...register('MComSSS')} />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>PHIC Employee</Label>
-                        <Input type="number" step="0.01" {...register('MempPHIC')} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>PHIC Employer</Label>
-                        <Input type="number" step="0.01" {...register('MComPHIC')} />
-                      </div>
+                    <Label htmlFor="idNumber">ID Number</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="idNumber"
+                        {...register('idno')}
+                        readOnly
+                        className="bg-slate-50 font-mono font-bold text-slate-700"
+                        disabled={isViewOnly}
+                      />
+                      {!isEditing && !isViewOnly && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => setValue('idno', generateRandomID())}
+                          title="Regenerate ID"
+                        >
+                          <RefreshCcw className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                </TabsContent>
-                <TabsContent value="yearly" className="space-y-4 mt-4">
-                  <p className="text-sm text-muted-foreground">Yearly tracking is handled in reports.</p>
-                </TabsContent>
-              </Tabs>
-              <div className="space-y-3 pt-4 border-t">
-                <div className="space-y-2">
-                  <Label htmlFor="hdmfNo">HDMF No:</Label>
-                  <Input id="hdmfNo" {...register('HDMF')} placeholder="HDMF number" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sssNo">SSS No:</Label>
-                  <Input id="sssNo" {...register('SSS')} placeholder="SSS number" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phicNo">PHIC No:</Label>
-                  <Input id="phicNo" {...register('PHIC')} placeholder="PHIC number" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tinNo">TIN No:</Label>
-                  <Input id="tinNo" {...register('TIN')} placeholder="TIN number" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* SG License Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle>SG License Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="idControlNo">ID Control No.</Label>
-                <Input id="idControlNo" {...register('IDControlNo')} placeholder="Control number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="locator">Locator</Label>
-                <Input id="locator" {...register('Locator')} placeholder="Locator" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="issuedAt">Issued at</Label>
-                <Input id="issuedAt" {...register('IssueAt')} placeholder="Issue location" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="opNo">OP No.</Label>
-                <Input id="opNo" {...register('OPNo')} placeholder="OP number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dateIssued">Date Issued</Label>
-                <Input id="dateIssued" type="date" {...register('DTIssue')} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="datePaid">Date Paid</Label>
-                <Input id="datePaid" type="date" {...register('DTPaid')} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dateApproved">Date Approved</Label>
-                <Input id="dateApproved" type="date" {...register('DTApproved')} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dateExpiry">Date Expiry</Label>
-                <Input id="dateExpiry" type="date" {...register('DTExpiry')} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
+                    <Input id="firstName" {...register('Fname', { required: true })} placeholder="First name" disabled={isViewOnly} className={cn(errors.Fname && "border-red-500 focus-visible:ring-red-500")} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="middleName">Middle Name</Label>
+                    <Input id="middleName" {...register('MName')} placeholder="Middle name" disabled={isViewOnly} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
+                    <Input id="lastName" {...register('LName', { required: true })} placeholder="Last name" disabled={isViewOnly} className={cn(errors.LName && "border-red-500 focus-visible:ring-red-500")} />
+                  </div>
+                </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Photo Upload */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Employee Photo</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <input
-                type="file"
-                id="photo-upload"
-                className="hidden"
-                accept="image/*"
-                onChange={handlePhotoChange}
-              />
-              <div
-                className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center cursor-pointer hover:bg-slate-50 transition-colors"
-                onClick={() => document.getElementById('photo-upload')?.click()}
-              >
-                {employeePhoto ? (
-                  <img src={employeePhoto} alt="Employee" className="w-full h-48 object-contain rounded" />
-                ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                    <Controller
+                      name="Bdate"
+                      control={control}
+                      render={({ field }) => (
+                        <DatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={isViewOnly}
+                        />
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="age">Age</Label>
+                    <Input id="age" type="number" placeholder="Age" {...register('Age')} disabled={isViewOnly} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="bloodType">Blood Type</Label>
+                    <Controller
+                      name="BloodType"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isViewOnly}>
+                          <SelectTrigger id="bloodType">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="A+">A+</SelectItem>
+                            <SelectItem value="A-">A-</SelectItem>
+                            <SelectItem value="B+">B+</SelectItem>
+                            <SelectItem value="B-">B-</SelectItem>
+                            <SelectItem value="AB+">AB+</SelectItem>
+                            <SelectItem value="AB-">AB-</SelectItem>
+                            <SelectItem value="O+">O+</SelectItem>
+                            <SelectItem value="O-">O-</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="civilStatus">Civil Status</Label>
+                    <Controller
+                      name="CivilStatus"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value} disabled={isViewOnly}>
+                          <SelectTrigger id="civilStatus">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="single">Single</SelectItem>
+                            <SelectItem value="married">Married</SelectItem>
+                            <SelectItem value="widowed">Widowed</SelectItem>
+                            <SelectItem value="separated">Separated</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gender">Gender</Label>
+                    <Input id="gender" {...register('Gender')} placeholder="Enter gender" list="gender-list" disabled={isViewOnly} />
+                    <datalist id="gender-list">
+                      <option value="Male" />
+                      <option value="Female" />
+                    </datalist>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="religion">Religion</Label>
+                    <Input id="religion" {...register('Religion')} placeholder="Enter religion" list="religion-list" disabled={isViewOnly} />
+                    <datalist id="religion-list">
+                      {religions.map((r) => (
+                        <option key={r} value={r} />
+                      ))}
+                    </datalist>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="heightFt">Height (ft'in")</Label>
+                    <Input
+                      id="heightFt"
+                      type="text"
+                      placeholder="e.g. 5'7"
+                      value={heightFt}
+                      disabled={isViewOnly}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        const isAdding = val.length > heightFt.length;
+                        if (isAdding && /^\d$/.test(val)) val = val + "'";
+                        setHeightFt(val);
+                        const match = val.match(/^(\d+)'(\d*)$/);
+                        if (match) {
+                          const ft = parseInt(match[1]) || 0;
+                          const inches = parseInt(match[2]) || 0;
+                          const totalCm = (ft * 12 + inches) * 2.54;
+                          if (totalCm > 0) setValue('heightCm', totalCm.toFixed(1));
+                        } else {
+                          setValue('heightCm', '');
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="heightCm">Centimeter</Label>
+                    <Input
+                      id="heightCm"
+                      {...register('heightCm')}
+                      readOnly
+                      className="bg-slate-50 text-slate-500"
+                      disabled={isViewOnly}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="weightLb">Weight (lb)</Label>
+                    <Input id="weightLb" {...register('weightLb')} placeholder="Weight" disabled={isViewOnly} />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t">
+                  <h4 className="text-sm font-semibold mb-3">Address & Contact</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="contactNo">Contact No.</Label>
+                      <Input id="contactNo" {...register('ContactNo')} placeholder="Phone number" disabled={isViewOnly} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emailAdd">Email Address</Label>
+                      <Input id="emailAdd" type="email" {...register('EmailAdd')} placeholder="Email" disabled={isViewOnly} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentAddress">Current Address</Label>
+                      <Textarea id="currentAddress" {...register('CAddress')} placeholder="Current address" disabled={isViewOnly} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="permanentAddress">Permanent Address</Label>
+                      <Textarea id="permanentAddress" {...register('PAddress')} placeholder="Permanent address" disabled={isViewOnly} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Parents & Emergency Contact</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <Upload className="w-12 h-12 text-slate-400 mx-auto" />
-                    <div>
-                      <p className="text-sm text-slate-600">Click to upload photo</p>
-                      <p className="text-xs text-slate-400 mt-1">PNG, JPG up to 5MB</p>
-                    </div>
+                    <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">Father's Information</Label>
+                    <Input {...register('FatherName')} placeholder="Father's Name" disabled={isViewOnly} />
+                    <Input {...register('FOccupation')} placeholder="Occupation" disabled={isViewOnly} />
+                    <Input {...register('FContact')} placeholder="Contact Number" disabled={isViewOnly} />
+                    <Textarea {...register('FAddress')} placeholder="Address" disabled={isViewOnly} />
                   </div>
+                  <div className="space-y-4">
+                    <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">Mother's Information</Label>
+                    <Input {...register('MotherName')} placeholder="Mother's Name" disabled={isViewOnly} />
+                    <Input {...register('MOccupation')} placeholder="Occupation" disabled={isViewOnly} />
+                    <Input {...register('MContact')} placeholder="Contact Number" disabled={isViewOnly} />
+                    <Textarea {...register('MAddress')} placeholder="Address" disabled={isViewOnly} />
+                  </div>
+                </div>
+                <div className="pt-4 border-t space-y-4">
+                  <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">In Case of Emergency</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input {...register('ECPerson')} placeholder="Contact Person Name" disabled={isViewOnly} />
+                    <Input {...register('ECNo')} placeholder="Emergency Contact No." disabled={isViewOnly} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Tabs defaultValue="contributions" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="contributions">Contributions</TabsTrigger>
+                <TabsTrigger value="license">SG License</TabsTrigger>
+                <TabsTrigger value="education">Education</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="contributions" className="space-y-4 mt-6">
+                <Card>
+                  <CardContent className="pt-6 space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Employee Share Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">Employee Contributions</Label>
+                          <div className="hidden sm:flex gap-16 pr-4 lowercase sm:uppercase">
+                            <span className="text-[10px] font-bold text-slate-400">Monthly</span>
+                            <span className="text-[10px] font-bold text-slate-400">Yearly</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
+                            <Label className="text-sm">SSS</Label>
+                            <Input type="number" step="0.01" {...register('MempSSS')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                              {(parseFloat(String(watch('MempSSS'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
+                            <Label className="text-sm">PHIC</Label>
+                            <Input type="number" step="0.01" {...register('MempPHIC')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                              {(parseFloat(String(watch('MempPHIC'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
+                            <Label className="text-sm">HDMF</Label>
+                            <Input type="number" step="0.01" {...register('MempHDMF')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                              {(parseFloat(String(watch('MempHDMF'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Employer Share Section */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">Employer Share</Label>
+                          <div className="hidden sm:flex gap-16 pr-4 lowercase sm:uppercase">
+                            <span className="text-[10px] font-bold text-slate-400">Monthly</span>
+                            <span className="text-[10px] font-bold text-slate-400">Yearly</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
+                            <Label className="text-sm">SSS</Label>
+                            <Input type="number" step="0.01" {...register('MComSSS')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                              {(parseFloat(String(watch('MComSSS'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
+                            <Label className="text-sm">PHIC</Label>
+                            <Input type="number" step="0.01" {...register('MComPHIC')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                              {(parseFloat(String(watch('MComPHIC'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
+                            <Label className="text-sm">HDMF</Label>
+                            <Input type="number" step="0.01" {...register('MComHDMF')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                              {(parseFloat(String(watch('MComHDMF'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">SSS No.</Label>
+                        <Input {...register('SSS')} placeholder="SSS NO" className="h-9" disabled={isViewOnly} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">PHIC No.</Label>
+                        <Input {...register('PHIC')} placeholder="PHIC NO" className="h-9" disabled={isViewOnly} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">HDMF No.</Label>
+                        <Input {...register('HDMF')} placeholder="HDMF NO" className="h-9" disabled={isViewOnly} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold text-slate-400 uppercase">TIN No.</Label>
+                        <Input {...register('TIN')} placeholder="TIN NO" className="h-9" disabled={isViewOnly} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="license" className="space-y-4 mt-6">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>ID Control No.</Label>
+                        <Input {...register('IDControlNo')} disabled={isViewOnly} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Locator</Label>
+                        <Input {...register('Locator')} disabled={isViewOnly} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Issued At</Label>
+                        <Input {...register('IssueAt')} disabled={isViewOnly} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>OP No.</Label>
+                        <Input {...register('OPNo')} disabled={isViewOnly} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date Issued</Label>
+                        <Controller name="DTIssue" control={control} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} disabled={isViewOnly} />} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date Paid</Label>
+                        <Controller name="DTPaid" control={control} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} disabled={isViewOnly} />} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date Approved</Label>
+                        <Controller name="DTApproved" control={control} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} disabled={isViewOnly} />} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Date Expiry</Label>
+                        <Controller name="DTExpiry" control={control} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} disabled={isViewOnly} />} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="education" className="mt-6">
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <div className="space-y-2">
+                      <Label>Level Type</Label>
+                      <Controller
+                        name="LevelType"
+                        control={control}
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value} disabled={isViewOnly}>
+                            <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="elementary">Elementary</SelectItem>
+                              <SelectItem value="highschool">High School</SelectItem>
+                              <SelectItem value="college">College</SelectItem>
+                              <SelectItem value="vocational">Vocational</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                    <Input {...register('School')} placeholder="School Name" disabled={isViewOnly} />
+                    <Input {...register('Course')} placeholder="Course" disabled={isViewOnly} />
+                    <Textarea {...register('EducAddress')} placeholder="School Address" disabled={isViewOnly} />
+                    <div className="space-y-2">
+                      <Label>Year Graduated</Label>
+                      <Controller name="DTYearGrad" control={control} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} disabled={isViewOnly} />} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+            </Tabs>
+          </div>
+
+          {/* Right Column (1/3) */}
+          <div className="space-y-6">
+            <Card>
+              <CardHeader><CardTitle>Photo</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div
+                  className={cn(
+                    "w-full h-48 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center relative overflow-hidden",
+                    !isViewOnly && "cursor-pointer hover:bg-slate-50 transition-colors"
+                  )}
+                  onClick={() => !isViewOnly && document.getElementById('photo-input')?.click()}
+                >
+                  {employeePhoto ? (
+                    <img src={employeePhoto} alt="Employee" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <Upload className="w-8 h-8 text-slate-400 mb-2" />
+                      <span className="text-xs text-slate-500">Upload Photo</span>
+                    </>
+                  )}
+                  <input id="photo-input" type="file" hidden accept="image/*" onChange={handlePhotoChange} disabled={isViewOnly} />
+                </div>
+                {!isViewOnly && (
+                  <Button variant="outline" className="w-full" onClick={() => document.getElementById('photo-input')?.click()}>
+                    <Plus className="w-4 h-4 mr-2" /> Load Picture
+                  </Button>
                 )}
-              </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => document.getElementById('photo-upload')?.click()}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Load Picture
-              </Button>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Deployment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="salaryMethod">Salary Method</Label>
-                <Select onValueChange={(val) => setValue('EmpRate', val)} value={watch('EmpRate') as string}>
-                  <SelectTrigger id="salaryMethod">
-                    <SelectValue placeholder="Select method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <Card>
+              <CardHeader><CardTitle>Employment Details</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="monthlyRate">Monthly Rate</Label>
-                  <Input id="monthlyRate" type="number" step="0.01" {...register('MonthlyRate')} />
+                  <Label>Salary Method</Label>
+                  <Controller
+                    name="EmpRate"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewOnly}>
+                        <SelectTrigger><SelectValue placeholder="Monthly" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="daily">Daily</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Monthly Rate</Label>
+                    <Input type="number" {...register('MonthlyRate')} disabled={isViewOnly} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Daily Rate</Label>
+                    <Input type="number" {...register('DailyRate')} disabled={isViewOnly} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Allowance</Label>
+                    <Input type="number" {...register('Allowance')} disabled={isViewOnly} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Hour Rate</Label>
+                    <Input type="number" {...register('HourRate')} disabled={isViewOnly} />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dailyRate">Daily Rate</Label>
-                  <Input id="dailyRate" type="number" step="0.01" {...register('DailyRate')} />
+                  <Label>Bank Account / Type</Label>
+                  <Input {...register('BankAccount')} placeholder="Account NO" disabled={isViewOnly} className="mb-2" />
+                  <Input {...register('BankType')} placeholder="Bank Name (e.g. BDO)" disabled={isViewOnly} />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mt-4 border-t pt-4">Deployment</div>
                 <div className="space-y-2">
-                  <Label htmlFor="allowance">Allowance</Label>
-                  <Input id="allowance" type="number" step="0.01" {...register('Allowance')} />
+                  <Label>Status</Label>
+                  <Controller
+                    name="EmpStatus"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewOnly}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {employeeStatuses.map(s => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="hourRate">Hour Rate</Label>
-                  <Input id="hourRate" type="number" step="0.01" {...register('HourRate')} />
+                  <Label>Position</Label>
+                  <Controller
+                    name="Position"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewOnly}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {positions.map(p => (
+                            <SelectItem key={p.name} value={p.name}>{p.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cardNumber">Card Number</Label>
-                <Input id="cardNumber" {...register('CardNumber')} placeholder="Card number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bankAccount">Bank Account</Label>
-                <Input id="bankAccount" {...register('BankAccount')} placeholder="Bank account number" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bankType">Bank Name/Type</Label>
-                <Input id="bankType" {...register('BankType')} placeholder="e.g. BDO, BPI" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dateHired">Date Hired</Label>
-                <Input id="dateHired" type="date" {...register('DTHired')} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="empStatus">Employee Status</Label>
-                <Select onValueChange={(val) => setValue('EmpStatus', val)} value={watch('EmpStatus') as string}>
-                  <SelectTrigger id="empStatus">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {employeeStatuses.map((s) => (
-                      <SelectItem key={s} value={s.toLowerCase().replace(/\s+/g, '-')}>
-                        {s}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="position">Position</Label>
-                <Select onValueChange={(val) => setValue('Position', val)} value={watch('Position') as string}>
-                  <SelectTrigger id="position">
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {positions.map((p) => (
-                      <SelectItem key={p.name} value={p.code.toLowerCase()}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Select onValueChange={(val) => setValue('Department', val)} value={watch('Department') as string}>
-                  <SelectTrigger id="department">
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((d) => (
-                      <SelectItem key={d.name} value={d.code.toLowerCase()}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="jobDescription">Job Description</Label>
-                <Textarea id="jobDescription" {...register('JobDescription')} placeholder="Enter job description" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="quitClaim">Quit Claim</Label>
-                <Select onValueChange={(val) => setValue('QuitClaim', val)} value={watch('QuitClaim') as string}>
-                  <SelectTrigger id="quitClaim">
-                    <SelectValue placeholder="Select option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Controller
+                    name="Department"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewOnly}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                          {departments.map(d => (
+                            <SelectItem key={d.name} value={d.name}>{d.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date Hired</Label>
+                  <Controller name="DTHired" control={control} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} disabled={isViewOnly} />} />
+                </div>
+                <div className="space-y-2 pt-2 border-t mt-2">
+                  <Label>Job Description</Label>
+                  <Textarea
+                    {...register('JobDescription')}
+                    rows={3}
+                    disabled={isViewOnly}
+                    className="text-xs resize-none"
+                    placeholder="Brief description of duties..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Quit Claim</Label>
+                  <Controller
+                    name="QuitClaim"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value} disabled={isViewOnly}>
+                        <SelectTrigger className="h-8"><SelectValue placeholder="No" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="yes">Yes</SelectItem>
+                          <SelectItem value="no">No</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Overtime Rates */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Overtime Rate</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="otRegDay">OT Reg Day</Label>
-                  <Input id="otRegDay" type="number" step="0.01" {...register('OTRegDay')} />
+            <Card>
+              <CardHeader>
+                <CardTitle>Overtime Rates</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-600">Regular Day</Label>
+                    <Input type="number" step="0.01" {...register('OTRegDay')} disabled={isViewOnly} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-600">Sunday</Label>
+                    <Input type="number" step="0.01" {...register('OTSunday')} disabled={isViewOnly} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="otSunday">OT Sunday</Label>
-                  <Input id="otSunday" type="number" step="0.01" {...register('OTSunday')} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-600">Special Holiday</Label>
+                    <Input type="number" step="0.01" {...register('OTSpecial')} disabled={isViewOnly} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold text-slate-600">Legal Holiday</Label>
+                    <Input type="number" step="0.01" {...register('OTLegal')} disabled={isViewOnly} />
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="otSpecial">OT Special</Label>
-                  <Input id="otSpecial" type="number" step="0.01" {...register('OTSpecial')} />
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold text-slate-600">Night Differential (Base / Add)</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input type="number" step="0.01" {...register('OTNDBase')} disabled={isViewOnly} />
+                    <Input type="number" step="0.01" {...register('OTNDAdd')} disabled={isViewOnly} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="otLegal">OT Legal</Label>
-                  <Input id="otLegal" type="number" step="0.01" {...register('OTLegal')} />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="otNd">OT Night Diff</Label>
-                <Input id="otNd" type="number" step="0.01" {...register('OTNightDiff')} />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Educational Attainment */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Highest Educational Attainment</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="levelType">Level Type</Label>
-                <Select onValueChange={(val) => setValue('LevelType', val)} value={watch('LevelType') as string}>
-                  <SelectTrigger id="levelType">
-                    <SelectValue placeholder="Select level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="elementary">Elementary</SelectItem>
-                    <SelectItem value="highschool">High School</SelectItem>
-                    <SelectItem value="college">College</SelectItem>
-                    <SelectItem value="vocational">Vocational</SelectItem>
-                    <SelectItem value="masteral">Masteral</SelectItem>
-                    <SelectItem value="doctoral">Doctoral</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="school">School</Label>
-                <Input id="school" {...register('School')} placeholder="School name" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="course">Course</Label>
-                <Input id="course" {...register('Course')} placeholder="Course/Program" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="schoolAddress">Address</Label>
-                <Textarea id="schoolAddress" {...register('EducAddress')} placeholder="School address" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="yearGraduated">Year Graduated</Label>
-                <Input id="yearGraduated" type="date" {...register('DTYearGrad')} />
-              </div>
-            </CardContent>
-          </Card>
+          </div>
         </div>
-      </div>
+      </form>
 
+      <AnimatePresence>
+        {isSuccessOpen && (
+          <Dialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
+            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-white p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] gap-0">
+              <div className="bg-indigo-600 p-8 flex flex-col items-center justify-center relative overflow-hidden">
+                <motion.div
+                  className="absolute w-64 h-64 bg-white/10 rounded-full -top-32 -right-32"
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
+                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                />
+                <motion.div
+                  className="absolute w-48 h-48 bg-white/5 rounded-full -bottom-24 -left-24"
+                  animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0] }}
+                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                />
+
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20,
+                    delay: 0.1
+                  }}
+                  className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl z-10"
+                >
+                  <CheckCircle2 className="w-10 h-10 text-indigo-600" />
+                </motion.div>
+
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-white text-2xl font-bold mt-6 z-10"
+                >
+                  {isEditing ? 'Record Updated' : 'Employee Added'}
+                </motion.h2>
+              </div>
+
+              <div className="p-8 space-y-6">
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-slate-600 text-center leading-relaxed"
+                >
+                  {isEditing
+                    ? 'The employee record has been successfully updated in the secure database.'
+                    : 'The employee has been successfully added to the system and is now active.'}
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <DialogClose asChild>
+                    <Button
+                      className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-semibold shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+                    >
+                      Continue
+                    </Button>
+                  </DialogClose>
+                </motion.div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isErrorOpen && (
+          <Dialog open={isErrorOpen} onOpenChange={setIsErrorOpen}>
+            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-white p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] gap-0">
+              <div className="bg-red-500 p-8 flex flex-col items-center justify-center relative overflow-hidden">
+                <motion.div
+                  className="absolute w-64 h-64 bg-white/10 rounded-full -top-32 -right-32"
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
+                  transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                />
+                <motion.div
+                  className="absolute w-48 h-48 bg-white/5 rounded-full -bottom-24 -left-24"
+                  animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0] }}
+                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                />
+
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 20,
+                    delay: 0.1
+                  }}
+                  className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl z-10"
+                >
+                  <XCircle className="w-10 h-10 text-red-500" />
+                </motion.div>
+
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-white text-2xl font-bold mt-6 z-10 text-center"
+                >
+                  Submission Failed
+                </motion.h2>
+              </div>
+
+              <div className="p-8 space-y-6">
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-slate-600 text-center leading-relaxed font-medium"
+                >
+                  {errorMessage}
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <DialogClose asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full h-12 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-2xl font-semibold transition-all active:scale-[0.98]"
+                    >
+                      Dismiss
+                    </Button>
+                  </DialogClose>
+                </motion.div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
