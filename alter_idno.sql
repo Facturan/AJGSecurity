@@ -1,4 +1,0 @@
-ALTER TABLE "EMPDETAILS"
-ALTER COLUMN "idno" TYPE TEXT;
-
-NOTIFY pgrst, 'reload schema';

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { Users, Search, Filter, Calendar, ArrowUpRight } from 'lucide-react';
 import { useHeader } from './components/Header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -38,6 +39,7 @@ export function BorrowDataList() {
     setHeaderInfo({
       title: 'EMPLOYEE LOANS REGISTRY',
       subtitle: 'List of all active loans',
+      icon: Users,
       searchPlaceholder: 'Search employees or loan types...',
       onSearch: (query) => setSearchTerm(query),
       onFilter: () => console.log('Filter clicked'),
@@ -78,116 +80,124 @@ export function BorrowDataList() {
       <div className="animate-in fade-in duration-500 space-y-6">
         {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-none shadow-sm bg-slate-900 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Users className="w-20 h-20" />
+          <Card className="border-border shadow-sm bg-card text-foreground overflow-hidden relative">
+            <div className="absolute top-0 right-0 p-4">
+              <Users className="w-20 h-20 text-slate-950" />
             </div>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium opacity-80 uppercase tracking-wider">
+              <CardTitle className="text-sm font-bold text-slate-950 uppercase tracking-wider">
                 Total Borrowers
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-black">{borrowData.length}</div>
-              <p className="text-xs opacity-60 mt-1">Active loan accounts</p>
+              <div className="text-3xl font-black text-slate-950">{borrowData.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">Active loan accounts</p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-border shadow-sm bg-card">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600 uppercase tracking-wider">
+              <CardTitle className="text-sm font-bold text-slate-950 uppercase tracking-wider">
                 Total Amount Loaned
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-slate-900">
+              <div className="text-3xl font-bold text-slate-950">
                 {formatCurrency(borrowData.reduce((sum, item) => sum + item.amountBorrowed, 0))}
               </div>
-              <p className="text-xs text-slate-500 mt-1">Cumulative principal</p>
+              <p className="text-xs text-muted-foreground mt-1">Cumulative principal</p>
             </CardContent>
           </Card>
 
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-border shadow-sm bg-card">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600 uppercase tracking-wider">
+              <CardTitle className="text-sm font-bold text-slate-950 uppercase tracking-wider">
                 Avg. Monthly Collection
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-slate-950">
                 {formatCurrency(
                   borrowData.length > 0
                     ? borrowData.reduce((sum, item) => sum + item.monthlyPayment, 0) / borrowData.length
                     : 0
                 )}
               </div>
-              <p className="text-xs text-slate-500 mt-1">Per active borrower</p>
+              <p className="text-xs text-muted-foreground mt-1">Per active borrower</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Main Table Card */}
-        <Card className="border-slate-200 shadow-xl overflow-hidden bg-white">
+        <Card className="border-border shadow-xl overflow-hidden bg-card">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-slate-900">
-                  <TableRow className="hover:bg-slate-900 border-none">
-                    <TableHead className="text-white font-black uppercase tracking-wide h-14 px-6">Employee Name</TableHead>
-                    <TableHead className="text-white font-black uppercase tracking-wide h-14">Loan Type</TableHead>
-                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10">
+                <TableHeader className="bg-slate-950 border-b border-border">
+                  <TableRow className="hover:bg-transparent border-none">
+                    <TableHead className="text-white font-black uppercase tracking-wide h-14 px-6 text-xs">Employee Name</TableHead>
+                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-xs">Loan Type</TableHead>
+                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10 text-xs">
                       Amount Borrowed
                     </TableHead>
-                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10">Month to Pay</TableHead>
-                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10">Monthly</TableHead>
-                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10">Bi/Monthly</TableHead>
-                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center">Loan ID</TableHead>
+                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10 text-xs">Month to Pay</TableHead>
+                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10 text-xs">Monthly</TableHead>
+                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10 text-xs">Bi/Monthly</TableHead>
+                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center text-xs">Loan ID</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredData.length > 0 ? (
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-40 text-center">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
+                          <p className="text-muted-foreground font-medium">Loading records...</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredData.length > 0 ? (
                     filteredData.map((item, index) => (
                       <TableRow
                         key={item.id}
-                        className={`group transition-colors hover:bg-blue-50/30 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
-                          }`}
+                        className="group transition-colors hover:bg-muted/30 border-b border-border/50 last:border-0"
                       >
                         <TableCell className="px-6 py-4">
                           <button
                             onClick={() => setSelectedRecord(item)}
-                            className="flex items-center gap-2 text-slate-900 hover:text-blue-600 font-normal transition-all group-hover:translate-x-1"
+                            className="flex items-center gap-2 text-foreground font-bold hover:text-primary transition-all group-hover:translate-x-1"
                           >
-                            <span className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-black text-xs border border-slate-200">
+                            <span className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-black text-[10px] border border-border">
                               {item.employeeName.charAt(0)}
                             </span>
                             {item.employeeName}
-                            <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
                           </button>
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className="bg-white border-slate-200 text-slate-600 font-medium text-[10px] uppercase tracking-tighter"
+                            className="bg-muted/30 border-border text-muted-foreground font-bold text-[10px] uppercase tracking-tighter"
                           >
                             {item.loanType}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-center font-normal text-slate-900 tabular-nums px-10">
+                        <TableCell className="text-center font-bold text-foreground tabular-nums px-10">
                           {formatCurrency(item.amountBorrowed)}
                         </TableCell>
-                        <TableCell className="text-center font-medium text-slate-600 italic px-10">
+                        <TableCell className="text-center font-medium text-muted-foreground italic px-10">
                           {item.monthlyToPay} Months
                         </TableCell>
-                        <TableCell className="text-center font-normal text-slate-900 tabular-nums px-10">
+                        <TableCell className="text-center font-bold text-foreground tabular-nums px-10">
                           {formatCurrency(item.monthlyPayment)}
                         </TableCell>
-                        <TableCell className="text-center font-normal text-blue-600 tabular-nums px-10">
+                        <TableCell className="text-center font-bold text-primary tabular-nums px-10">
                           {formatCurrency(item.biMonthlyPayment)}
                         </TableCell>
                         <TableCell className="text-center">
                           <Badge
                             variant="outline"
-                            className="bg-slate-100 border-slate-200 text-slate-800 font-normal text-[11px] uppercase whitespace-nowrap px-3"
+                            className="bg-primary/10 border-primary/20 text-primary font-bold text-[11px] uppercase whitespace-nowrap px-3 py-0.5"
                           >
                             {item.loanId}
                           </Badge>
@@ -197,7 +207,7 @@ export function BorrowDataList() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={7} className="h-40 text-center">
-                        <div className="flex flex-col items-center justify-center text-slate-400">
+                        <div className="flex flex-col items-center justify-center text-muted-foreground/60">
                           <Search className="w-10 h-10 mb-2 opacity-20" />
                           <p className="font-medium">No borrow data found matching your search.</p>
                         </div>
@@ -212,17 +222,19 @@ export function BorrowDataList() {
       </div>
 
       {/* Loan Ledger Modal */}
-      {selectedRecord && (
-        <LoanLedger
-          employeeName={selectedRecord.employeeName}
-          loanId={selectedRecord.loanId}
-          loanType={selectedRecord.loanType}
-          amount={selectedRecord.amountBorrowed}
-          monthly={selectedRecord.monthlyPayment}
-          biMonthly={selectedRecord.biMonthlyPayment}
-          onClose={() => setSelectedRecord(null)}
-        />
-      )}
+      <AnimatePresence>
+        {selectedRecord && (
+          <LoanLedger
+            employeeName={selectedRecord.employeeName}
+            loanId={selectedRecord.loanId}
+            loanType={selectedRecord.loanType}
+            amount={selectedRecord.amountBorrowed}
+            monthly={selectedRecord.monthlyPayment}
+            biMonthly={selectedRecord.biMonthlyPayment}
+            onClose={() => setSelectedRecord(null)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

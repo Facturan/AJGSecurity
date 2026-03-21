@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
-import { AlertCircle, Calendar } from 'lucide-react';
+import { AlertCircle, Calendar, Shield, Bell } from 'lucide-react';
 import { useLocation } from 'react-router';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useHeader } from './components/Header';
@@ -70,7 +70,17 @@ export function FirearmMasterData() {
         setHeaderInfo({
             title: titles[activeFirearmTab] || 'FIREARM SETUP',
             subtitle: subtitles[activeFirearmTab] ?? 'Global configuration for firearm records',
+            icon: Shield,
             showSearch: false,
+            customActions: activeFirearmTab === 'License' ? (
+                <div className="relative flex-shrink-0">
+                    <button
+                        className="relative w-9 h-9 rounded-xl bg-background border border-border flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-all shadow-sm"
+                    >
+                        <Bell size={15} />
+                    </button>
+                </div>
+            ) : undefined
         });
     }, [activeFirearmTab, setHeaderInfo]);
 
@@ -108,42 +118,42 @@ export function FirearmMasterData() {
                         return (
                             <div className="flex flex-col gap-4 animate-in fade-in duration-300">
                                 {/* Entry Form */}
-                                <Card>
+                                <Card className="border-border">
                                     <CardContent className="pt-6">
                                         <div className="flex flex-col lg:flex-row gap-6">
                                             {/* Left: Form Fields */}
                                             <div className="flex flex-col gap-3 w-full lg:w-auto lg:min-w-[320px]">
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                    <Label className="text-slate-700 font-semibold sm:w-32 shrink-0 sm:text-right">Serial Number:</Label>
+                                                    <Label className="text-foreground font-semibold sm:w-32 shrink-0 sm:text-right">Serial Number:</Label>
                                                     <Input
                                                         id="serialNo"
                                                         value={licenseForm.serialNo}
                                                         onChange={(e) => setLicenseForm({ ...licenseForm, serialNo: e.target.value })}
-                                                        className="h-9 sm:h-7 text-sm"
+                                                        className="h-9 sm:h-7 text-sm focus-visible:ring-primary/50"
                                                     />
                                                 </div>
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                    <Label className="text-slate-700 font-semibold sm:w-32 shrink-0 sm:text-right">Date Approved:</Label>
+                                                    <Label className="text-foreground font-semibold sm:w-32 shrink-0 sm:text-right">Date Approved:</Label>
                                                     <Input
                                                         type="date"
                                                         value={licenseForm.dateApproved}
                                                         onChange={(e) => setLicenseForm({ ...licenseForm, dateApproved: e.target.value })}
-                                                        className="h-9 sm:h-7 text-sm"
+                                                        className="h-9 sm:h-7 text-sm focus-visible:ring-primary/50"
                                                     />
                                                 </div>
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                    <Label className="text-slate-700 font-semibold sm:w-32 shrink-0 sm:text-right">Date Expiry:</Label>
+                                                    <Label className="text-foreground font-semibold sm:w-32 shrink-0 sm:text-right">Date Expiry:</Label>
                                                     <Input
                                                         type="date"
                                                         value={licenseForm.dateExpiry}
                                                         onChange={(e) => setLicenseForm({ ...licenseForm, dateExpiry: e.target.value })}
-                                                        className="h-9 sm:h-7 text-sm"
+                                                        className="h-9 sm:h-7 text-sm focus-visible:ring-primary/50"
                                                     />
                                                 </div>
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                    <Label className="text-slate-700 font-semibold sm:w-32 shrink-0 sm:text-right">Kind:</Label>
+                                                    <Label className="text-foreground font-semibold sm:w-32 shrink-0 sm:text-right">Kind:</Label>
                                                     <Select value={licenseForm.kind} onValueChange={(val) => setLicenseForm({ ...licenseForm, kind: val })}>
-                                                        <SelectTrigger className="h-9 sm:h-7 text-sm">
+                                                        <SelectTrigger className="h-9 sm:h-7 text-sm text-foreground bg-input-background">
                                                             <SelectValue placeholder="" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -154,9 +164,9 @@ export function FirearmMasterData() {
                                                     </Select>
                                                 </div>
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                    <Label className="text-slate-700 font-semibold sm:w-32 shrink-0 sm:text-right">Make:</Label>
+                                                    <Label className="text-foreground font-semibold sm:w-32 shrink-0 sm:text-right">Make:</Label>
                                                     <Select value={licenseForm.make} onValueChange={(val) => setLicenseForm({ ...licenseForm, make: val })}>
-                                                        <SelectTrigger className="h-9 sm:h-7 text-sm">
+                                                        <SelectTrigger className="h-9 sm:h-7 text-sm text-foreground bg-input-background">
                                                             <SelectValue placeholder="" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -167,9 +177,9 @@ export function FirearmMasterData() {
                                                     </Select>
                                                 </div>
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                    <Label className="text-slate-700 font-semibold sm:w-32 shrink-0 sm:text-right">Caliber:</Label>
+                                                    <Label className="text-foreground font-semibold sm:w-32 shrink-0 sm:text-right">Caliber:</Label>
                                                     <Select value={licenseForm.caliber} onValueChange={(val) => setLicenseForm({ ...licenseForm, caliber: val })}>
-                                                        <SelectTrigger className="h-9 sm:h-7 text-sm">
+                                                        <SelectTrigger className="h-9 sm:h-7 text-sm text-foreground bg-input-background">
                                                             <SelectValue placeholder="" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -180,9 +190,9 @@ export function FirearmMasterData() {
                                                     </Select>
                                                 </div>
                                                 <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                                                    <Label className="text-slate-700 font-semibold sm:w-32 shrink-0 sm:text-right">Model:</Label>
+                                                    <Label className="text-foreground font-semibold sm:w-32 shrink-0 sm:text-right">Model:</Label>
                                                     <Select value={licenseForm.model} onValueChange={(val) => setLicenseForm({ ...licenseForm, model: val })}>
-                                                        <SelectTrigger className="h-9 sm:h-7 text-sm">
+                                                        <SelectTrigger className="h-9 sm:h-7 text-sm text-foreground bg-input-background">
                                                             <SelectValue placeholder="" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -193,30 +203,30 @@ export function FirearmMasterData() {
                                                     </Select>
                                                 </div>
                                                 <div className="flex justify-end mt-2">
-                                                    <Button size="sm" onClick={handleSaveLicense} className="w-full sm:w-auto">Save</Button>
+                                                    <Button size="sm" onClick={handleSaveLicense} className="w-full sm:w-auto bg-primary text-white hover:bg-primary/90">Save</Button>
                                                 </div>
                                             </div>
 
                                             {/* Right: Table */}
-                                            <div className="flex-1 overflow-x-auto">
+                                            <div className="flex-1 overflow-x-auto border border-border rounded-lg">
                                                 <table className="w-full text-sm border-collapse min-w-[600px]">
                                                     <thead>
-                                                        <tr className="bg-slate-800 text-white">
-                                                            <th className="border border-slate-700 px-3 py-2 text-center font-semibold whitespace-nowrap tracking-wide text-xs uppercase">SERIAL NO.</th>
-                                                            <th className="border border-slate-700 px-3 py-2 text-center font-semibold whitespace-nowrap tracking-wide text-xs uppercase">KIND / MAKE / CALIBER / MODEL</th>
-                                                            <th className="border border-slate-700 px-3 py-2 text-center font-semibold whitespace-nowrap tracking-wide text-xs uppercase">DATE APPROVED</th>
-                                                            <th className="border border-slate-700 px-3 py-2 text-center font-semibold whitespace-nowrap tracking-wide text-xs uppercase">DATE EXPIRY</th>
+                                                        <tr className="bg-primary/10 text-foreground">
+                                                            <th className="border-b border-r border-border px-3 py-2 text-center font-semibold whitespace-nowrap tracking-wide text-xs uppercase">SERIAL NO.</th>
+                                                            <th className="border-b border-r border-border px-3 py-2 text-center font-semibold whitespace-nowrap tracking-wide text-xs uppercase">KIND / MAKE / CALIBER / MODEL</th>
+                                                            <th className="border-b border-r border-border px-3 py-2 text-center font-semibold whitespace-nowrap tracking-wide text-xs uppercase">DATE APPROVED</th>
+                                                            <th className="border-b border-border px-3 py-2 text-center font-semibold whitespace-nowrap tracking-wide text-xs uppercase">DATE EXPIRY</th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody>
+                                                    <tbody className="bg-card">
                                                         {licenseRecords.map((rec, i) => (
-                                                            <tr key={i} className={i % 2 === 0 ? 'bg-white text-slate-800 hover:bg-slate-50' : 'bg-slate-50 text-slate-800 hover:bg-slate-100'}>
-                                                                <td className="border border-slate-200 px-3 py-1.5 text-center text-sm">{rec.serialNo}</td>
-                                                                <td className="border border-slate-200 px-3 py-1.5 text-center text-sm">
+                                                            <tr key={i} className="hover:bg-muted/30 transition-colors">
+                                                                <td className="border-b border-r border-border px-3 py-1.5 text-center text-sm text-foreground">{rec.serialNo}</td>
+                                                                <td className="border-b border-r border-border px-3 py-1.5 text-center text-sm text-foreground">
                                                                     {[rec.kind, rec.make, rec.caliber, rec.model].filter(Boolean).join(' / ')}
                                                                 </td>
-                                                                <td className="border border-slate-200 px-3 py-1.5 text-center text-sm">{rec.dateApproved}</td>
-                                                                <td className="border border-slate-200 px-3 py-1.5 text-center text-sm">{rec.dateExpiry}</td>
+                                                                <td className="border-b border-r border-border px-3 py-1.5 text-center text-sm text-foreground">{rec.dateApproved}</td>
+                                                                <td className="border-b border-border px-3 py-1.5 text-center text-sm text-foreground">{rec.dateExpiry}</td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
@@ -239,36 +249,36 @@ export function FirearmMasterData() {
 
                     return (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in slide-in-from-bottom-2 duration-300">
-                            <Card>
+                            <Card className="border-border">
                                 <CardHeader>
-                                    <CardTitle>Add {config.label}</CardTitle>
-                                    <CardDescription>Setup new {config.label.toLowerCase()} in the system</CardDescription>
+                                    <CardTitle className="text-foreground">Add {config.label}</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Setup new {config.label.toLowerCase()} in the system</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="firearmInput">{config.label} Name</Label>
-                                        <Input id="firearmInput" placeholder={`e.g., ${config.data[0] || '1911'}`} />
+                                        <Label htmlFor="firearmInput" className="text-foreground">{config.label} Name</Label>
+                                        <Input id="firearmInput" placeholder={`e.g., ${config.data[0] || '1911'}`} className="focus-visible:ring-primary/50" />
                                     </div>
-                                    <Button className="w-full" onClick={() => {
+                                    <Button className="w-full bg-primary text-white hover:bg-primary/90" onClick={() => {
                                         const val = (document.getElementById('firearmInput') as HTMLInputElement)?.value;
                                         if (val) { config.addFn(val); (document.getElementById('firearmInput') as HTMLInputElement).value = ''; }
                                     }}>Add {config.label}</Button>
                                 </CardContent>
                             </Card>
 
-                            <Card>
+                            <Card className="border-border">
                                 <CardHeader>
-                                    <CardTitle>Existing {config.label}s</CardTitle>
-                                    <CardDescription>All configured {config.label.toLowerCase()}s</CardDescription>
+                                    <CardTitle className="text-foreground">Existing {config.label}s</CardTitle>
+                                    <CardDescription className="text-muted-foreground">All configured {config.label.toLowerCase()}s</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
                                         {config.data.map((item, index) => (
-                                            <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
-                                                <p className="font-medium">{item}</p>
+                                            <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg bg-card hover:bg-muted/30 transition-colors">
+                                                <p className="font-medium text-foreground">{item}</p>
                                                 <div className="flex gap-2">
-                                                    <Button variant="ghost" size="sm">Edit</Button>
-                                                    <Button variant="ghost" size="sm" className="text-red-500">Delete</Button>
+                                                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">Edit</Button>
+                                                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600 hover:bg-red-500/10">Delete</Button>
                                                 </div>
                                             </div>
                                         ))}

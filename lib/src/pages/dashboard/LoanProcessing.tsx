@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, FileText, User, CreditCard, Calculator, TrendingUp, Search, Calendar, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Save, FileText, User, CreditCard, Calculator, TrendingUp, Search, Calendar, CheckCircle2, AlertCircle, Banknote } from 'lucide-react';
 import { useHeader } from './components/Header';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -91,6 +91,7 @@ export function LoanProcessing() {
     setHeaderInfo({
       title: 'LOAN PROCESSING',
       subtitle: 'Process new loan applications',
+      icon: Banknote,
       searchPlaceholder: 'Search applications...',
       showSearch: false,
     });
@@ -175,17 +176,17 @@ export function LoanProcessing() {
   };
 
   return (
-    <div className="animate-in fade-in duration-500 max-w-4xl mx-auto space-y-6">
-      <Card className="border-slate-200 shadow-xl overflow-hidden">
-        <div className="h-2 bg-slate-900 w-full"></div>
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100 pb-8">
+    <div className="animate-in fade-in duration-500 max-w-4xl mx-auto space-y-6 px-4 py-2">
+      <Card className="border-border shadow-xl overflow-hidden bg-card">
+        <div className="h-2 bg-primary w-full"></div>
+        <CardHeader className="bg-muted/10 border-b border-border pb-8">
           <div className="flex items-center gap-4 mb-2">
-            <div className="p-3 bg-slate-900 rounded-2xl shadow-lg">
+            <div className="p-3 bg-primary rounded-2xl shadow-lg shadow-primary/20">
               <Calculator className="w-6 h-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold text-slate-900">New Loan Application</CardTitle>
-              <CardDescription>Fill out the form below to process a new loan</CardDescription>
+              <CardTitle className="text-2xl font-bold text-foreground">New Loan Application</CardTitle>
+              <CardDescription className="text-muted-foreground">Fill out the form below to process a new loan</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -195,8 +196,8 @@ export function LoanProcessing() {
             <div className="space-y-6">
               {/* 1. Employee Name */}
               <div className="space-y-2">
-                <Label htmlFor="employee" className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <User className="w-4 h-4 text-slate-400" />
+                <Label htmlFor="employee" className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
                   Employee Name
                 </Label>
                 <Select
@@ -210,16 +211,16 @@ export function LoanProcessing() {
                     }));
                   }}
                 >
-                  <SelectTrigger className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all">
+                  <SelectTrigger className="h-12 bg-muted/20 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all text-foreground">
                     <SelectValue placeholder="Select an employee" />
                   </SelectTrigger>
-                  <SelectContent className="w-[400px]">
-                    <div className="p-2 border-b sticky top-0 bg-white/80 backdrop-blur-md z-10" onKeyDown={(e) => e.stopPropagation()}>
+                  <SelectContent className="w-[320px] sm:w-[400px] border-border bg-card">
+                    <div className="p-2 border-b border-border sticky top-0 bg-card z-10" onKeyDown={(e) => e.stopPropagation()}>
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
                           placeholder="Search by name or ID..."
-                          className="pl-9 h-9 text-xs focus-visible:ring-1 focus-visible:ring-slate-900 border-slate-100"
+                          className="pl-9 h-9 text-xs focus-visible:ring-1 focus-visible:ring-primary border-border bg-muted/20"
                           value={employeeSearch}
                           onChange={(e) => setEmployeeSearch(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
@@ -229,15 +230,15 @@ export function LoanProcessing() {
                     <div className="max-h-[300px] overflow-y-auto">
                       {filteredEmployees.length > 0 ? (
                         filteredEmployees.map((emp) => (
-                          <SelectItem key={emp.EmplID} value={emp.EmplID.toString()}>
+                          <SelectItem key={emp.EmplID} value={emp.EmplID.toString()} className="hover:bg-muted/50 focus:bg-muted/50 cursor-pointer">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-slate-800">{emp.Fname} {emp.LName}</span>
-                              <span className="text-[10px] text-slate-400 font-mono">#{emp.EmplID}</span>
+                              <span className="font-bold text-foreground">{emp.Fname} {emp.LName}</span>
+                              <span className="text-[10px] text-muted-foreground font-mono">#{emp.EmplID}</span>
                             </div>
                           </SelectItem>
                         ))
                       ) : (
-                        <div className="p-4 text-center text-slate-400 text-xs italic">
+                        <div className="p-4 text-center text-muted-foreground text-xs italic">
                           No employees found.
                         </div>
                       )}
@@ -248,8 +249,8 @@ export function LoanProcessing() {
 
               {/* 2. Loan Type */}
               <div className="space-y-2">
-                <Label htmlFor="loanType" className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-slate-400" />
+                <Label htmlFor="loanType" className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-primary" />
                   Loan Type
                 </Label>
                 <Select
@@ -261,12 +262,12 @@ export function LoanProcessing() {
                     }));
                   }}
                 >
-                  <SelectTrigger className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all">
+                  <SelectTrigger className="h-12 bg-muted/20 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all text-foreground">
                     <SelectValue placeholder="Select loan type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="border-border bg-card">
                     {Array.from(new Set(loanTypes.map(lt => lt.loanType))).map((type) => (
-                      <SelectItem key={type} value={type}>
+                      <SelectItem key={type} value={type} className="hover:bg-muted/50 focus:bg-muted/50 cursor-pointer text-foreground">
                         {type}
                       </SelectItem>
                     ))}
@@ -278,17 +279,17 @@ export function LoanProcessing() {
             {/* Right Column */}
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="amountBorrowed" className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <PesoIcon className="w-4 h-4 text-slate-400" />
+                <Label htmlFor="amountBorrowed" className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <PesoIcon className="w-4 h-4 text-primary" />
                   Amount Borrowed
                 </Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₱</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-bold">₱</span>
                   <Input
                     id="amountBorrowed"
                     type="text"
                     placeholder="0.00"
-                    className="h-12 pl-8 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all font-bold text-lg"
+                    className="h-12 pl-8 bg-muted/20 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all font-bold text-lg text-foreground"
                     value={amountInput}
                     onChange={(e) => {
                       const value = e.target.value.replace(/,/g, '');
@@ -302,8 +303,8 @@ export function LoanProcessing() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="monthlyToPay" className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-slate-400" />
+                <Label htmlFor="monthlyToPay" className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-primary" />
                   Month To Pay
                 </Label>
                 <div className="relative group">
@@ -311,47 +312,47 @@ export function LoanProcessing() {
                     id="monthlyToPay"
                     type="number"
                     placeholder="e.g. 12"
-                    className="h-12 bg-slate-50/50 border-slate-200 focus:bg-white focus:ring-2 focus:ring-slate-900/10 transition-all font-bold text-lg"
+                    className="h-12 bg-muted/20 border-border focus:bg-background focus:ring-2 focus:ring-primary/20 transition-all font-bold text-lg text-foreground"
                     value={formData.monthlyToPay === 0 ? '' : formData.monthlyToPay}
                     onChange={(e) => handleMonthlyToPayChange(e.target.value)}
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-slate-200 rounded text-[10px] font-black text-slate-600">
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-muted rounded text-[10px] font-black text-foreground">
                     Months
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="monthlyPayment" className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-slate-400" />
+                <Label htmlFor="monthlyPayment" className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
                   Monthly Payment
                 </Label>
                 <div className="relative group">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold group-focus-within:text-slate-900">₱</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold group-focus-within:text-foreground">₱</span>
                   <Input
                     id="monthlyPayment"
                     type="text"
                     readOnly
                     placeholder="0.00"
-                    className="h-12 pl-8 bg-slate-100 border-slate-200 text-slate-500 font-bold cursor-not-allowed"
+                    className="h-12 pl-8 bg-muted/30 border-border text-foreground font-bold cursor-not-allowed opacity-80"
                     value={formData.monthlyPayment === 0 ? '' : formatWithCommas(formData.monthlyPayment)}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="biMonthlyPayment" className="text-sm font-bold text-slate-500 flex items-center gap-2">
-                  <Calculator className="w-4 h-4 text-slate-300" />
+                <Label htmlFor="biMonthlyPayment" className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Calculator className="w-4 h-4 text-primary" />
                   Bi/Monthly Payment
                 </Label>
                 <div className="relative group">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 font-bold group-focus-within:text-slate-400">₱</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-bold group-focus-within:text-foreground">₱</span>
                   <Input
                     id="biMonthlyPayment"
                     type="text"
                     readOnly
                     placeholder="0.00"
-                    className="h-12 pl-8 bg-slate-100 border-slate-200 text-slate-500 font-bold cursor-not-allowed"
+                    className="h-12 pl-8 bg-muted/30 border-border text-foreground font-bold cursor-not-allowed opacity-80"
                     value={formData.biMonthlyPayment === 0 ? '' : formatWithCommas(formData.biMonthlyPayment)}
                   />
                 </div>
@@ -359,10 +360,10 @@ export function LoanProcessing() {
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-slate-100 flex justify-end gap-4">
+          <div className="mt-12 pt-8 border-t border-border flex justify-end gap-4">
             <Button
               variant="outline"
-              className="h-12 px-8 border-slate-200 text-slate-600 hover:bg-slate-50 font-semibold"
+              className="h-12 px-8 border-border text-muted-foreground hover:text-foreground hover:bg-muted font-semibold"
               onClick={() => setFormData({
                 loanId: '',
                 employeeId: '',
@@ -377,7 +378,7 @@ export function LoanProcessing() {
               Clear Form
             </Button>
             <Button
-              className="h-12 px-12 bg-slate-900 hover:bg-slate-800 text-white font-bold gap-2 shadow-xl shadow-slate-200 active:scale-95 transition-all"
+              className="h-12 px-12 bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-xl shadow-primary/20 active:scale-95 transition-all"
               onClick={handleSave}
               disabled={isLoading}
             >
@@ -400,8 +401,8 @@ export function LoanProcessing() {
       <AnimatePresence>
         {isSuccessOpen && (
           <Dialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
-            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-white p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] gap-0">
-              <div className="bg-indigo-600 p-8 flex flex-col items-center justify-center relative overflow-hidden">
+            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-card p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] gap-0">
+              <div className="bg-primary p-8 flex flex-col items-center justify-center relative overflow-hidden">
                 <motion.div
                   className="absolute w-64 h-64 bg-white/10 rounded-full -top-32 -right-32"
                   animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
@@ -417,9 +418,9 @@ export function LoanProcessing() {
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-                  className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl z-10"
+                  className="w-20 h-20 bg-background rounded-3xl flex items-center justify-center shadow-xl z-10"
                 >
-                  <CheckCircle2 className="w-10 h-10 text-indigo-600" />
+                  <CheckCircle2 className="w-10 h-10 text-primary" />
                 </motion.div>
 
                 <motion.h2
@@ -437,7 +438,7 @@ export function LoanProcessing() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="text-slate-600 text-center leading-relaxed"
+                  className="text-muted-foreground text-center leading-relaxed"
                 >
                   The loan application has been successfully saved to the database.
                 </motion.p>
@@ -449,7 +450,7 @@ export function LoanProcessing() {
                 >
                   <DialogClose asChild>
                     <Button
-                      className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-semibold shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+                      className="w-full h-12 bg-primary hover:bg-primary/90 text-white rounded-2xl font-semibold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
                     >
                       Continue
                     </Button>
@@ -464,8 +465,8 @@ export function LoanProcessing() {
       <AnimatePresence>
         {isErrorOpen && (
           <Dialog open={isErrorOpen} onOpenChange={setIsErrorOpen}>
-            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-white p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] gap-0">
-              <div className="bg-red-500 p-8 flex flex-col items-center justify-center relative overflow-hidden">
+            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-card p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] gap-0">
+              <div className="bg-destructive p-8 flex flex-col items-center justify-center relative overflow-hidden">
                 <motion.div
                   className="absolute w-64 h-64 bg-white/10 rounded-full -top-32 -right-32"
                   animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
@@ -481,9 +482,9 @@ export function LoanProcessing() {
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-                  className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl z-10"
+                  className="w-20 h-20 bg-background rounded-3xl flex items-center justify-center shadow-xl z-10"
                 >
-                  <AlertCircle className="w-10 h-10 text-red-500" />
+                  <AlertCircle className="w-10 h-10 text-destructive" />
                 </motion.div>
 
                 <motion.h2
@@ -501,7 +502,7 @@ export function LoanProcessing() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="bg-red-50 text-red-700 p-4 rounded-xl text-sm border border-red-100 break-words font-mono"
+                  className="bg-destructive/10 text-destructive p-4 rounded-xl text-sm border border-destructive/20 break-words font-mono"
                 >
                   {errorMessage}
                 </motion.div>
@@ -514,7 +515,7 @@ export function LoanProcessing() {
                   <DialogClose asChild>
                     <Button
                       variant="outline"
-                      className="w-full h-12 text-slate-600 rounded-2xl font-semibold border-slate-200 hover:bg-slate-50 transition-all active:scale-[0.98]"
+                      className="w-full h-12 text-muted-foreground rounded-2xl font-semibold border-border hover:bg-muted hover:text-foreground transition-all active:scale-[0.98]"
                     >
                       Dismiss
                     </Button>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
-import { UserPlus, Upload, Save, Search, Trash2, Plus, Loader2, RefreshCcw, Eye, Calendar as CalendarIcon, CheckCircle2, XCircle } from 'lucide-react';
+import { UserPlus, Upload, Save, Search, Trash2, Loader2, RefreshCcw, Eye, Calendar as CalendarIcon, CheckCircle2, XCircle, Building2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
@@ -91,6 +91,7 @@ interface EmployeeData {
   DTPaid: string;
   DTApproved: string;
   DTExpiry: string;
+  AssignedCompany: string;
 }
 
 export function EmployeeRegistration() {
@@ -132,7 +133,8 @@ export function EmployeeRegistration() {
       LevelType: '', School: '', Course: '', EducAddress: '',
       DTYearGrad: '',
       IDControlNo: '', Locator: '', IssueAt: '', OPNo: '',
-      DTIssue: '', DTPaid: '', DTApproved: '', DTExpiry: ''
+      DTIssue: '', DTPaid: '', DTApproved: '', DTExpiry: '',
+      AssignedCompany: ''
     }
   });
 
@@ -375,6 +377,7 @@ export function EmployeeRegistration() {
     setHeaderInfo({
       title: isEditing ? (isViewOnly ? 'View Employee Details' : 'Edit Employee Details') : 'Employee Registration Form',
       subtitle: 'Employee Management',
+      icon: UserPlus,
       showSearch: false,
       showPrimaryAction: !isViewOnly,
       primaryActionLabel: isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'UPDATE RECORD' : 'SAVE EMPLOYEE'),
@@ -399,18 +402,18 @@ export function EmployeeRegistration() {
         setIsErrorOpen(true);
       })} className="space-y-6">
         {isViewOnly && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center gap-4 mb-4">
+          <div className="bg-blue-500/10 border border-blue-500/20 text-blue-500 px-4 py-3 rounded-lg flex items-center gap-4 mb-4">
             <div className="flex items-center gap-2">
               <Eye className="w-5 h-5 font-bold" />
               <p className="text-sm font-bold uppercase tracking-wider">Read Only Mode</p>
             </div>
-            <div className="h-4 w-[1px] bg-blue-200 ml-2" />
-            <p className="text-xs font-medium text-blue-600">You are viewing this record. Updates are disabled.</p>
+            <div className="h-4 w-[1px] bg-blue-500/20 ml-2" />
+            <p className="text-xs font-medium">You are viewing this record. Updates are disabled.</p>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="ml-auto text-blue-700 border-blue-300 hover:bg-blue-600 hover:text-white transition-all font-bold"
+              className="ml-auto text-blue-500 border-blue-500/30 hover:bg-blue-500 hover:text-white transition-all font-bold"
               onClick={() => setIsViewOnly(false)}
             >
               ENABLE EDITING
@@ -445,7 +448,7 @@ export function EmployeeRegistration() {
                         id="idNumber"
                         {...register('idno')}
                         readOnly
-                        className="bg-slate-50 font-mono font-bold text-slate-700"
+                        className="bg-muted/20 font-mono font-bold text-foreground/80 border-border"
                         disabled={isViewOnly}
                       />
                       {!isEditing && !isViewOnly && (
@@ -595,7 +598,7 @@ export function EmployeeRegistration() {
                       id="heightCm"
                       {...register('heightCm')}
                       readOnly
-                      className="bg-slate-50 text-slate-500"
+                      className="bg-muted/20 text-muted-foreground border-border"
                       disabled={isViewOnly}
                     />
                   </div>
@@ -605,7 +608,7 @@ export function EmployeeRegistration() {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t">
+                <div className="pt-4 border-t border-border">
                   <h4 className="text-sm font-semibold mb-3">Address & Contact</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -638,14 +641,14 @@ export function EmployeeRegistration() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">Father's Information</Label>
+                    <Label className="text-foreground font-bold uppercase tracking-wider text-xs">Father's Information</Label>
                     <Input {...register('FatherName')} placeholder="Father's Name" disabled={isViewOnly} />
                     <Input {...register('FOccupation')} placeholder="Occupation" disabled={isViewOnly} />
                     <Input {...register('FContact')} placeholder="Contact Number" disabled={isViewOnly} />
                     <Textarea {...register('FAddress')} placeholder="Address" disabled={isViewOnly} />
                   </div>
                   <div className="space-y-4">
-                    <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">Mother's Information</Label>
+                    <Label className="text-foreground font-bold uppercase tracking-wider text-xs">Mother's Information</Label>
                     <Input {...register('MotherName')} placeholder="Mother's Name" disabled={isViewOnly} />
                     <Input {...register('MOccupation')} placeholder="Occupation" disabled={isViewOnly} />
                     <Input {...register('MContact')} placeholder="Contact Number" disabled={isViewOnly} />
@@ -653,7 +656,7 @@ export function EmployeeRegistration() {
                   </div>
                 </div>
                 <div className="pt-4 border-t space-y-4">
-                  <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">In Case of Emergency</Label>
+                  <Label className="text-foreground font-bold uppercase tracking-wider text-xs font-black">In Case of Emergency</Label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input {...register('ECPerson')} placeholder="Contact Person Name" disabled={isViewOnly} />
                     <Input {...register('ECNo')} placeholder="Emergency Contact No." disabled={isViewOnly} />
@@ -676,10 +679,10 @@ export function EmployeeRegistration() {
                       {/* Employee Share Section */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between border-b pb-2">
-                          <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">Employee Contributions</Label>
+                          <Label className="text-foreground font-bold uppercase tracking-wider text-xs">Employee Contributions</Label>
                           <div className="hidden sm:flex gap-16 pr-4 lowercase sm:uppercase">
-                            <span className="text-[10px] font-bold text-slate-400">Monthly</span>
-                            <span className="text-[10px] font-bold text-slate-400">Yearly</span>
+                            <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Monthly</span>
+                            <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Yearly</span>
                           </div>
                         </div>
 
@@ -687,7 +690,7 @@ export function EmployeeRegistration() {
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
                             <Label className="text-sm">SSS</Label>
                             <Input type="number" step="0.01" {...register('MempSSS')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
-                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-muted/20 border border-border text-xs font-bold text-muted-foreground/80 tabular-nums shadow-inner">
                               {(parseFloat(String(watch('MempSSS'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                             </div>
                           </div>
@@ -695,7 +698,7 @@ export function EmployeeRegistration() {
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
                             <Label className="text-sm">PHIC</Label>
                             <Input type="number" step="0.01" {...register('MempPHIC')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
-                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-muted/20 border border-border text-xs font-bold text-muted-foreground/80 tabular-nums shadow-inner">
                               {(parseFloat(String(watch('MempPHIC'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                             </div>
                           </div>
@@ -703,7 +706,7 @@ export function EmployeeRegistration() {
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
                             <Label className="text-sm">HDMF</Label>
                             <Input type="number" step="0.01" {...register('MempHDMF')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
-                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-muted/20 border border-border text-xs font-bold text-muted-foreground/80 tabular-nums shadow-inner">
                               {(parseFloat(String(watch('MempHDMF'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                             </div>
                           </div>
@@ -713,10 +716,10 @@ export function EmployeeRegistration() {
                       {/* Employer Share Section */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between border-b pb-2">
-                          <Label className="text-slate-900 font-bold uppercase tracking-wider text-xs">Employer Share</Label>
+                          <Label className="text-foreground font-bold uppercase tracking-wider text-xs">Employer Share</Label>
                           <div className="hidden sm:flex gap-16 pr-4 lowercase sm:uppercase">
-                            <span className="text-[10px] font-bold text-slate-400">Monthly</span>
-                            <span className="text-[10px] font-bold text-slate-400">Yearly</span>
+                            <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Monthly</span>
+                            <span className="text-[10px] font-bold text-muted-foreground/60 uppercase">Yearly</span>
                           </div>
                         </div>
 
@@ -724,7 +727,7 @@ export function EmployeeRegistration() {
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
                             <Label className="text-sm">SSS</Label>
                             <Input type="number" step="0.01" {...register('MComSSS')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
-                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-muted/20 border border-border text-xs font-bold text-muted-foreground/80 tabular-nums shadow-inner">
                               {(parseFloat(String(watch('MComSSS'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                             </div>
                           </div>
@@ -732,7 +735,7 @@ export function EmployeeRegistration() {
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
                             <Label className="text-sm">PHIC</Label>
                             <Input type="number" step="0.01" {...register('MComPHIC')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
-                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-muted/20 border border-border text-xs font-bold text-muted-foreground/80 tabular-nums shadow-inner">
                               {(parseFloat(String(watch('MComPHIC'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                             </div>
                           </div>
@@ -740,7 +743,7 @@ export function EmployeeRegistration() {
                           <div className="grid grid-cols-1 sm:grid-cols-[1fr_100px_100px] items-center gap-4">
                             <Label className="text-sm">HDMF</Label>
                             <Input type="number" step="0.01" {...register('MComHDMF')} className="h-8 text-right tabular-nums" disabled={isViewOnly} />
-                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-slate-50 border border-slate-100 text-xs font-bold text-slate-500 tabular-nums">
+                            <div className="h-8 flex items-center justify-end px-3 rounded-md bg-muted/20 border border-border text-xs font-bold text-muted-foreground/80 tabular-nums shadow-inner">
                               {(parseFloat(String(watch('MComHDMF'))) * 12 || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                             </div>
                           </div>
@@ -750,19 +753,19 @@ export function EmployeeRegistration() {
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-6 border-t">
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-bold text-slate-400 uppercase">SSS No.</Label>
+                        <Label className="text-[10px] font-bold text-muted-foreground/60 uppercase">SSS No.</Label>
                         <Input {...register('SSS')} placeholder="SSS NO" className="h-9" disabled={isViewOnly} />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-bold text-slate-400 uppercase">PHIC No.</Label>
+                        <Label className="text-[10px] font-bold text-muted-foreground/60 uppercase">PHIC No.</Label>
                         <Input {...register('PHIC')} placeholder="PHIC NO" className="h-9" disabled={isViewOnly} />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-bold text-slate-400 uppercase">HDMF No.</Label>
+                        <Label className="text-[10px] font-bold text-muted-foreground/60 uppercase">HDMF No.</Label>
                         <Input {...register('HDMF')} placeholder="HDMF NO" className="h-9" disabled={isViewOnly} />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-bold text-slate-400 uppercase">TIN No.</Label>
+                        <Label className="text-[10px] font-bold text-muted-foreground/60 uppercase">TIN No.</Label>
                         <Input {...register('TIN')} placeholder="TIN NO" className="h-9" disabled={isViewOnly} />
                       </div>
                     </div>
@@ -853,8 +856,8 @@ export function EmployeeRegistration() {
               <CardContent className="space-y-4">
                 <div
                   className={cn(
-                    "w-full h-48 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center relative overflow-hidden",
-                    !isViewOnly && "cursor-pointer hover:bg-slate-50 transition-colors"
+                    "w-full h-48 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center relative overflow-hidden",
+                    !isViewOnly && "cursor-pointer hover:bg-muted/10 transition-colors"
                   )}
                   onClick={() => !isViewOnly && document.getElementById('photo-input')?.click()}
                 >
@@ -862,17 +865,25 @@ export function EmployeeRegistration() {
                     <img src={employeePhoto} alt="Employee" className="w-full h-full object-cover" />
                   ) : (
                     <>
-                      <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                      <span className="text-xs text-slate-500">Upload Photo</span>
+                      <Upload className="w-8 h-8 text-muted-foreground/40 mb-2" />
+                      <span className="text-xs text-muted-foreground/60">Upload Photo</span>
                     </>
                   )}
                   <input id="photo-input" type="file" hidden accept="image/*" onChange={handlePhotoChange} disabled={isViewOnly} />
                 </div>
-                {!isViewOnly && (
-                  <Button variant="outline" className="w-full" onClick={() => document.getElementById('photo-input')?.click()}>
-                    <Plus className="w-4 h-4 mr-2" /> Load Picture
-                  </Button>
-                )}
+
+                <div className="space-y-2 pt-4 border-t border-border mt-2">
+                  <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    <Label className="text-[10px] font-black uppercase tracking-widest">Assigned Company</Label>
+                  </div>
+                  <Input
+                    {...register('AssignedCompany')}
+                    placeholder="Enter Assigned Company"
+                    disabled={isViewOnly}
+                    className="h-10 rounded-xl border-border bg-muted/5 focus-visible:ring-primary/20 transition-all"
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -920,7 +931,7 @@ export function EmployeeRegistration() {
                   <Input {...register('BankAccount')} placeholder="Account NO" disabled={isViewOnly} className="mb-2" />
                   <Input {...register('BankType')} placeholder="Bank Name (e.g. BDO)" disabled={isViewOnly} />
                 </div>
-                <div className="space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mt-4 border-t pt-4">Deployment</div>
+                <div className="space-y-2 text-xs font-bold uppercase tracking-wider text-muted-foreground mt-4 border-t border-border pt-4">Deployment</div>
                 <div className="space-y-2">
                   <Label>Status</Label>
                   <Controller
@@ -1012,29 +1023,29 @@ export function EmployeeRegistration() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Regular Day</Label>
-                    <Input type="number" step="0.01" {...register('OTRegDay')} disabled={isViewOnly} />
+                    <Label className="text-xs font-bold text-muted-foreground">Regular Day</Label>
+                    <Input type="number" step="0.01" {...register('OTRegDay', { valueAsNumber: true })} disabled={isViewOnly} className="h-9" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Sunday</Label>
-                    <Input type="number" step="0.01" {...register('OTSunday')} disabled={isViewOnly} />
+                    <Label className="text-xs font-bold text-muted-foreground">Sunday</Label>
+                    <Input type="number" step="0.01" {...register('OTSunday', { valueAsNumber: true })} disabled={isViewOnly} className="h-9" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Special Holiday</Label>
-                    <Input type="number" step="0.01" {...register('OTSpecial')} disabled={isViewOnly} />
+                    <Label className="text-xs font-bold text-muted-foreground">Special Holiday</Label>
+                    <Input type="number" step="0.01" {...register('OTSpecial', { valueAsNumber: true })} disabled={isViewOnly} className="h-9" />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold text-slate-600">Legal Holiday</Label>
-                    <Input type="number" step="0.01" {...register('OTLegal')} disabled={isViewOnly} />
+                    <Label className="text-xs font-bold text-muted-foreground">Legal Holiday</Label>
+                    <Input type="number" step="0.01" {...register('OTLegal', { valueAsNumber: true })} disabled={isViewOnly} className="h-9" />
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs font-semibold text-slate-600">Night Differential (Base / Add)</Label>
+                  <Label className="text-xs font-bold text-muted-foreground">Night Differential (Base / Add)</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    <Input type="number" step="0.01" {...register('OTNDBase')} disabled={isViewOnly} />
-                    <Input type="number" step="0.01" {...register('OTNDAdd')} disabled={isViewOnly} />
+                    <Input type="number" step="0.01" {...register('OTNDBase', { valueAsNumber: true })} disabled={isViewOnly} className="h-9" />
+                    <Input type="number" step="0.01" {...register('OTNDAdd', { valueAsNumber: true })} disabled={isViewOnly} className="h-9" />
                   </div>
                 </div>
               </CardContent>
@@ -1047,8 +1058,8 @@ export function EmployeeRegistration() {
       <AnimatePresence>
         {isSuccessOpen && (
           <Dialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
-            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-white p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] gap-0">
-              <div className="bg-indigo-600 p-8 flex flex-col items-center justify-center relative overflow-hidden">
+            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-card p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] gap-0">
+              <div className="bg-primary p-8 flex flex-col items-center justify-center relative overflow-hidden">
                 <motion.div
                   className="absolute w-64 h-64 bg-white/10 rounded-full -top-32 -right-32"
                   animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0] }}
@@ -1071,7 +1082,7 @@ export function EmployeeRegistration() {
                   }}
                   className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl z-10"
                 >
-                  <CheckCircle2 className="w-10 h-10 text-indigo-600" />
+                  <CheckCircle2 className="w-10 h-10 text-primary" />
                 </motion.div>
 
                 <motion.h2
@@ -1089,7 +1100,7 @@ export function EmployeeRegistration() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="text-slate-600 text-center leading-relaxed"
+                  className="text-muted-foreground text-center leading-relaxed"
                 >
                   {isEditing
                     ? 'The employee record has been successfully updated in the secure database.'
@@ -1103,7 +1114,7 @@ export function EmployeeRegistration() {
                 >
                   <DialogClose asChild>
                     <Button
-                      className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-semibold shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+                      className="w-full h-12 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
                     >
                       Continue
                     </Button>
@@ -1118,7 +1129,7 @@ export function EmployeeRegistration() {
       <AnimatePresence>
         {isErrorOpen && (
           <Dialog open={isErrorOpen} onOpenChange={setIsErrorOpen}>
-            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-white p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] gap-0">
+            <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-card p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] gap-0">
               <div className="bg-red-500 p-8 flex flex-col items-center justify-center relative overflow-hidden">
                 <motion.div
                   className="absolute w-64 h-64 bg-white/10 rounded-full -top-32 -right-32"
@@ -1160,7 +1171,7 @@ export function EmployeeRegistration() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.4 }}
-                  className="text-slate-600 text-center leading-relaxed font-medium"
+                  className="text-muted-foreground text-center leading-relaxed font-bold"
                 >
                   {errorMessage}
                 </motion.p>
@@ -1173,7 +1184,7 @@ export function EmployeeRegistration() {
                   <DialogClose asChild>
                     <Button
                       variant="outline"
-                      className="w-full h-12 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-2xl font-semibold transition-all active:scale-[0.98]"
+                      className="w-full h-12 border-red-500/30 text-red-500 hover:bg-red-500/10 hover:text-red-500 rounded-2xl font-bold transition-all active:scale-[0.98]"
                     >
                       Dismiss
                     </Button>

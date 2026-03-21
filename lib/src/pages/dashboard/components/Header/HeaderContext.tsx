@@ -1,14 +1,26 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface HeaderInfo {
-    title: string;
-    subtitle: string;
+    title?: string;
+    subtitle?: string;
+    icon?: React.ElementType;
+    iconColor?: string;
     searchPlaceholder?: string;
     showSearch?: boolean;
     showPrimaryAction?: boolean;
     primaryActionLabel?: string | ReactNode;
+    primaryActionIcon?: React.ElementType;
     onPrimaryAction?: () => void;
+    // Secondary Action (e.g., Check Out)
+    showSecondaryAction?: boolean;
+    secondaryActionLabel?: string;
+    secondaryActionIcon?: React.ElementType;
+    onSecondaryAction?: () => void;
     onSearch?: (query: string) => void;
+
+    // Custom Actions
+    customActions?: React.ReactNode;
+    leftActions?: React.ReactNode;
 
     // New Action Buttons
     showRefresh?: boolean;

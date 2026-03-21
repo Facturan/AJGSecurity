@@ -12,6 +12,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useHeader } from './components/Header';
 import { useMasterData } from './MasterDataContext';
 import { EmployeeData } from './EmployeeData';
+import { EmployeeRegistration } from './EmployeeRegistration';
+import { TrainingDetails } from './TrainingDetails';
 
 export function MasterData() {
   const { setHeaderInfo } = useHeader();
@@ -61,7 +63,7 @@ export function MasterData() {
           initial={{ opacity: 0, y: -10, height: 0 }}
           animate={{ opacity: 1, y: 0, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className={`p-3 mt-2 rounded-lg flex items-center gap-2 text-sm font-medium ${submitStatus === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}
+          className={`p-3 mt-2 rounded-lg flex items-center gap-2 text-sm font-bold ${submitStatus === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}
         >
           {submitStatus === 'success' ? <CheckCircle2 className="w-4 h-4 flex-shrink-0" /> : <AlertCircle className="w-4 h-4 flex-shrink-0" />}
           <span className="break-words">{submitMessage}</span>
@@ -76,6 +78,8 @@ export function MasterData() {
   useEffect(() => {
     const titles: Record<string, { title: string; subtitle: string }> = {
       'employee-data-list': { title: 'EMPLOYEE DATA LIST', subtitle: 'Employee Records' },
+      'employee-registration': { title: 'EMPLOYEE REGISTRATION', subtitle: 'Register a new employee' },
+      'training-details': { title: 'TRAINING DETAILS', subtitle: 'Manage employee training records' },
       position: { title: 'Add New Position', subtitle: 'Create a new position in the system' },
       department: { title: 'Add New Department', subtitle: 'Create a new department' },
       religion: { title: 'Add New Religion', subtitle: 'Add a new religion option' },
@@ -88,9 +92,15 @@ export function MasterData() {
 
     const currentHeader = titles[section] || titles.position;
 
+    // Skip setting header info for sections that manage their own header
+    if (section === 'employee-registration' || section === 'employee-data-list' || section === 'training-details') {
+      return;
+    }
+
     setHeaderInfo({
       title: currentHeader.title,
       subtitle: currentHeader.subtitle,
+      icon: Settings,
       searchPlaceholder: 'Search...',
       showSearch: false,
     });
@@ -100,6 +110,10 @@ export function MasterData() {
     switch (section) {
       case 'employee-data-list':
         return <EmployeeData />;
+      case 'employee-registration':
+        return <EmployeeRegistration />;
+      case 'training-details':
+        return <TrainingDetails />;
       case 'position':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -126,10 +140,10 @@ export function MasterData() {
                   {positions.map((position, index) => (
                     <div
                       key={`${position.name}-${index}`}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors"
                     >
                       <div>
-                        <p className="font-medium">{position.name}</p>
+                        <p className="font-bold text-foreground">{position.name}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm">Edit</Button>
@@ -169,10 +183,10 @@ export function MasterData() {
                   {departments.map((dept, index) => (
                     <div
                       key={`${dept.name}-${index}`}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors"
                     >
                       <div>
-                        <p className="font-medium">{dept.name}</p>
+                        <p className="font-bold text-foreground">{dept.name}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm">Edit</Button>
@@ -212,9 +226,9 @@ export function MasterData() {
                   {religions.map((religion, index) => (
                     <div
                       key={`${religion}-${index}`}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors"
                     >
-                      <p className="font-medium">{religion}</p>
+                      <p className="font-bold text-foreground">{religion}</p>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm">Edit</Button>
                         <Button variant="ghost" size="sm" className="text-red-500">Delete</Button>
@@ -274,8 +288,8 @@ export function MasterData() {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-6 border-t mt-4">
-                <Button variant="outline" onClick={() => {
+              <div className="flex justify-end gap-2 pt-6 border-t border-border mt-4">
+                <Button variant="outline" className="border-border text-foreground" onClick={() => {
                   (document.getElementById('RateOTRegDay') as HTMLInputElement).value = '1.25';
                   (document.getElementById('RateOTSunday') as HTMLInputElement).value = '1.30';
                   (document.getElementById('RateOTSpecial') as HTMLInputElement).value = '1.30';
@@ -284,7 +298,7 @@ export function MasterData() {
                   (document.getElementById('RateOTNDAdd') as HTMLInputElement).value = '0.10';
                   toast.info('Rates reset to standard defaults. Click Save to apply.');
                 }}>Reset to Default</Button>
-                <Button className="bg-slate-900" onClick={async () => {
+                <Button className="bg-primary hover:bg-primary/90 text-white font-bold" onClick={async () => {
                   const RateOTRegDay = parseFloat((document.getElementById('RateOTRegDay') as HTMLInputElement)?.value || '0');
                   const RateOTSunday = parseFloat((document.getElementById('RateOTSunday') as HTMLInputElement)?.value || '0');
                   const RateOTSpecial = parseFloat((document.getElementById('RateOTSpecial') as HTMLInputElement)?.value || '0');
@@ -304,8 +318,8 @@ export function MasterData() {
               <AnimatePresence>
                 {isSuccessOpen && (
                   <Dialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
-                    <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-white p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] gap-0">
-                      <div className="bg-indigo-600 p-8 flex flex-col items-center justify-center relative overflow-hidden">
+                    <DialogContent className="sm:max-w-[400px] rounded-[32px] border-none bg-card p-0 overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] gap-0">
+                      <div className="bg-primary p-8 flex flex-col items-center justify-center relative overflow-hidden">
                         {/* Abstract animated background elements */}
                         <motion.div
                           className="absolute w-64 h-64 bg-white/10 rounded-full -top-32 -right-32"
@@ -329,7 +343,7 @@ export function MasterData() {
                           }}
                           className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-xl z-10"
                         >
-                          <CheckCircle2 className="w-10 h-10 text-indigo-600" />
+                          <CheckCircle2 className="w-10 h-10 text-primary" />
                         </motion.div>
 
                         <motion.h2
@@ -347,7 +361,7 @@ export function MasterData() {
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: 0.4 }}
-                          className="text-slate-600 text-center leading-relaxed"
+                          className="text-muted-foreground text-center leading-relaxed font-bold"
                         >
                           The system has been successfully calibrated with the new overtime rate matrix.
                         </motion.p>
@@ -359,7 +373,7 @@ export function MasterData() {
                         >
                           <DialogClose asChild>
                             <Button
-                              className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-semibold shadow-lg shadow-indigo-200 transition-all active:scale-[0.98]"
+                              className="w-full h-12 bg-primary hover:bg-primary/90 text-white rounded-2xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
                             >
                               Go Back
                             </Button>
@@ -383,52 +397,52 @@ export function MasterData() {
             </CardHeader>
             <CardContent className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                <div className="space-y-4 p-4 border rounded-xl bg-slate-50/50">
-                  <h3 className="font-bold text-slate-900 border-b pb-2">SSS Contribution</h3>
+                <div className="space-y-4 p-4 border border-border rounded-xl bg-muted/20">
+                  <h3 className="font-bold text-foreground border-b border-border pb-2">SSS Contribution</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="sssEmployee">Employee Contributions (%)</Label>
-                      <Input id="sssEmployee" type="number" step="0.01" defaultValue="4.50" />
+                      <Input id="sssEmployee" type="number" step="0.01" defaultValue="4.50" className="bg-background border-border text-foreground" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="sssEmployer">Employer Share (%)</Label>
-                      <Input id="sssEmployer" type="number" step="0.01" defaultValue="9.50" />
+                      <Input id="sssEmployer" type="number" step="0.01" defaultValue="9.50" className="bg-background border-border text-foreground" />
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4 p-4 border rounded-xl bg-slate-50/50">
-                  <h3 className="font-bold text-slate-900 border-b pb-2">PhilHealth (PHIC)</h3>
+                <div className="space-y-4 p-4 border border-border rounded-xl bg-muted/20">
+                  <h3 className="font-bold text-foreground border-b border-border pb-2">PhilHealth (PHIC)</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="phicEmployee">Employee Contributions (%)</Label>
-                      <Input id="phicEmployee" type="number" step="0.01" defaultValue="2.00" />
+                      <Input id="phicEmployee" type="number" step="0.01" defaultValue="2.00" className="bg-background border-border text-foreground" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phicEmployer">Employer Share (%)</Label>
-                      <Input id="phicEmployer" type="number" step="0.01" defaultValue="2.00" />
+                      <Input id="phicEmployer" type="number" step="0.01" defaultValue="2.00" className="bg-background border-border text-foreground" />
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4 p-4 border rounded-xl bg-slate-50/50">
-                  <h3 className="font-bold text-slate-900 border-b pb-2">HDMF (Pag-IBIG)</h3>
+                <div className="space-y-4 p-4 border border-border rounded-xl bg-muted/20">
+                  <h3 className="font-bold text-foreground border-b border-border pb-2">HDMF (Pag-IBIG)</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="hdmfEmployee">Employee Contributions (%)</Label>
-                      <Input id="hdmfEmployee" type="number" step="0.01" defaultValue="2.00" />
+                      <Input id="hdmfEmployee" type="number" step="0.01" defaultValue="2.00" className="bg-background border-border text-foreground" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="hdmfEmployer">Employer Share (%)</Label>
-                      <Input id="hdmfEmployer" type="number" step="0.01" defaultValue="2.00" />
+                      <Input id="hdmfEmployer" type="number" step="0.01" defaultValue="2.00" className="bg-background border-border text-foreground" />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-6 border-t">
-                <Button variant="outline">Reset to Default</Button>
-                <Button className="bg-slate-900 shadow-md">Save Contribution Rates</Button>
+              <div className="flex justify-end gap-3 pt-6 border-t border-border">
+                <Button variant="outline" className="border-border text-foreground">Reset to Default</Button>
+                <Button className="bg-primary hover:bg-primary/90 text-white font-bold shadow-md shadow-primary/20">Save Contribution Rates</Button>
               </div>
             </CardContent>
           </Card>
@@ -474,15 +488,15 @@ export function MasterData() {
                   ].map((location, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors"
                     >
                       <div>
-                        <p className="font-medium">{location.name}</p>
-                        <p className="text-xs text-slate-500">{location.address} - {location.employees} employees</p>
+                        <p className="font-bold text-foreground">{location.name}</p>
+                        <p className="text-xs text-muted-foreground font-medium">{location.address} - {location.employees} employees</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">Edit</Button>
-                        <Button variant="ghost" size="sm" className="text-red-500">Delete</Button>
+                        <Button variant="ghost" size="sm" className="text-foreground/70">Edit</Button>
+                        <Button variant="ghost" size="sm" className="text-red-500 font-bold">Delete</Button>
                       </div>
                     </div>
                   ))}
@@ -520,14 +534,14 @@ export function MasterData() {
                   {employeeStatuses.map((status, index) => (
                     <div
                       key={`${status}-${index}`}
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                      className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors"
                     >
                       <div>
-                        <p className="font-medium">{status}</p>
+                        <p className="font-bold text-foreground">{status}</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="ghost" size="sm">Edit</Button>
-                        <Button variant="ghost" size="sm" className="text-red-500">Delete</Button>
+                        <Button variant="ghost" size="sm" className="text-foreground/70">Edit</Button>
+                        <Button variant="ghost" size="sm" className="text-red-500 font-bold">Delete</Button>
                       </div>
                     </div>
                   ))}

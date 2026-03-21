@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Printer, Loader2, ChevronDown, Search } from 'lucide-react';
+import { Printer, Loader2, ChevronDown, Search, Calculator } from 'lucide-react';
 import { useHeader } from './components/Header';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -122,7 +122,7 @@ export function PayrollEntry() {
   }, [overtimeRates]);
 
   useEffect(() => {
-    setHeaderInfo({ title: 'Payroll Data Entry', subtitle: 'Payroll Management', showSearch: false });
+    setHeaderInfo({ title: 'Payroll Data Entry', subtitle: 'Payroll Management', icon: Calculator, showSearch: false });
     fetchEmployees();
   }, [setHeaderInfo]);
 
@@ -184,7 +184,7 @@ export function PayrollEntry() {
           loans.forEach((loan: any) => {
             const lType = (loan.loanType || '').toLowerCase().replace(/[^a-z0-9]/g, '');
             const amt = parseFloat(loan.biMonthlyPayment) || 0;
-            
+
             if (lType.includes('mpl')) vMpl += amt;
             else if (lType.includes('hdmf')) vHdmfLoan += amt;
             else if (lType.includes('sss')) vSssLoan += amt;
@@ -439,10 +439,10 @@ export function PayrollEntry() {
 
     const dRate = parseInput(dailyRate);
     const hr = dRate / 8;
-    
+
     // Sync Income calculation
     const base = dRate * parseInput(noOfDays);
-    
+
     const regOt = hr * parseInput(otRegDayMult) * parseInput(otRegDayHours);
     const sunOt = hr * parseInput(otSundayMult) * parseInput(otSundayHours);
     const specOt = hr * parseInput(otSpecialMult) * parseInput(otSpecialHours);
@@ -488,43 +488,43 @@ export function PayrollEntry() {
 
   return (
     <div className="w-full flex justify-center py-4 px-2">
-      <div className="w-full max-w-[1180px] bg-white border border-gray-200 rounded-xl shadow-[0_18px_45px_rgba(15,23,42,0.16)] overflow-hidden">
+      <div className="w-full max-w-[1180px] bg-card border border-[#E5E7EB] rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] overflow-hidden">
         {/* Top Section - Employee and Period Info */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 px-6 py-4 bg-[#f6f7fb] border-b border-gray-200">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 px-6 py-4 bg-white border-b border-[#E5E7EB]">
           <div className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-[80px_140px_160px_1fr] gap-2 items-start sm:items-center">
-              <Label className="font-bold text-sm text-black">ID No</Label>
-              <Input className="h-8 bg-gray-100 font-bold text-black" value={empIdNo} readOnly />
-              <Input className="h-8 text-left tabular-nums bg-gray-100 font-bold text-black" value={selectedEmpId || ''} readOnly />
+              <Label className="font-bold text-sm text-[#1C2B33]">ID No</Label>
+              <Input className="h-8 bg-white border-[#E5E7EB] font-bold text-[#1C2B33]" value={empIdNo} readOnly />
+              <Input className="h-8 text-left tabular-nums bg-white border-[#E5E7EB] font-bold text-[#1C2B33]" value={selectedEmpId || ''} readOnly />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr] gap-2 items-start sm:items-center">
-              <Label className="font-bold text-sm text-black">Employee</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-[80px_308px_1fr] gap-2 items-start sm:items-center">
+              <Label className="font-bold text-sm text-[#1C2B33]">Employee</Label>
               <div className="relative" ref={dropdownRef}>
                 {/* Trigger button */}
                 <button
                   type="button"
                   onClick={() => { setOpen(prev => !prev); setSearchQuery(''); }}
-                  className="h-8 w-full flex items-center justify-between bg-white border border-gray-300 rounded-md px-3 text-black font-bold text-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-slate-400 transition-all"
+                  className="h-8 w-full flex items-center justify-between bg-card border border-[#E5E7EB] rounded-md px-3 text-[#1C2B33] font-bold text-sm hover:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all"
                 >
                   <span className="truncate">
                     {selectedEmpId ? empName : ''}
                   </span>
-                  <ChevronDown className={`ml-2 h-4 w-4 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`ml-2 h-4 w-4 shrink-0 text-[#1C2B33] transition-transform ${open ? 'rotate-180' : ''}`} />
                 </button>
 
                 {/* Dropdown panel */}
                 {open && (
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+                  <div className="absolute z-50 mt-1 w-full bg-card border border-[#E5E7EB] rounded-md shadow-2xl overflow-hidden backdrop-blur-xl">
                     {/* Search input */}
-                    <div className="flex items-center border-b border-gray-200 px-3">
-                      <Search className="h-4 w-4 text-gray-400 shrink-0 mr-2" />
+                    <div className="flex items-center border-b border-[#E5E7EB] px-3">
+                      <Search className="h-4 w-4 text-[#1C2B33] shrink-0 mr-2" />
                       <input
                         autoFocus
                         type="text"
                         placeholder="Search by name or ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-9 text-sm text-black bg-transparent outline-none placeholder:text-gray-400"
+                        className="w-full h-9 text-sm text-[#1C2B33] bg-transparent outline-none placeholder:text-[#1C2B33]"
                       />
                     </div>
                     {/* Results list */}
@@ -535,7 +535,7 @@ export function PayrollEntry() {
                           `${emp.LName} ${emp.Fname} ${emp.EmplID} ${emp.idno}`.toLowerCase().includes(searchQuery.toLowerCase())
                         )
                         .length === 0 ? (
-                        <div className="px-3 py-4 text-center text-sm text-gray-400">No employee found.</div>
+                        <div className="px-3 py-4 text-center text-sm text-[#1C2B33]">No employee found.</div>
                       ) : (
                         employees
                           .filter(emp =>
@@ -551,14 +551,11 @@ export function PayrollEntry() {
                                 setOpen(false);
                                 setSearchQuery('');
                               }}
-                              className={`w-full flex flex-col items-start px-3 py-2 text-left hover:bg-slate-50 transition-colors border-b border-gray-100 last:border-0 ${selectedEmpId === emp.EmplID.toString() ? 'bg-slate-50' : ''
+                              className={`w-full flex flex-col items-start px-3 py-2 text-left hover:bg-muted transition-colors border-b border-[#E5E7EB]/50 last:border-0 ${selectedEmpId === emp.EmplID.toString() ? 'bg-muted' : ''
                                 }`}
                             >
-                              <span className="font-bold text-sm text-black">{emp.Fname} {emp.LName}</span>
-                              <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
-                                <span className="bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200 font-medium">ID: {emp.idno}</span>
-                                <span className="text-gray-300">|</span>
-                                <span className="italic">Sys: {emp.EmplID}</span>
+                              <span className="font-bold text-sm text-[#1C2B33]">{emp.Fname} {emp.LName}</span>
+                              <div className="flex items-center gap-2 text-[10px] text-[#1C2B33] mt-0.5">
                               </div>
                             </button>
                           ))
@@ -569,9 +566,9 @@ export function PayrollEntry() {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr_100px_1fr] gap-2 items-start sm:items-center">
-              <Label className="font-bold text-sm text-black">Method</Label>
+              <Label className="font-bold text-sm text-[#1C2B33]">Method</Label>
               <Select value={salaryMethod} onValueChange={setSalaryMethod}>
-                <SelectTrigger className="h-8 text-black bg-white">
+                <SelectTrigger className="h-8 text-[#1C2B33] bg-card border-[#E5E7EB]">
                   <SelectValue placeholder="Method" />
                 </SelectTrigger>
                 <SelectContent>
@@ -583,37 +580,37 @@ export function PayrollEntry() {
           </div>
           <div className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-[110px_1fr] gap-2 items-start sm:items-center">
-              <Label className="font-bold text-sm text-black">Posting</Label>
-              <Input className="h-8 text-black bg-white" type="date" value={datePosting} onChange={(e) => setDatePosting(e.target.value)} />
+              <Label className="font-bold text-sm text-[#1C2B33]">Posting</Label>
+              <Input className="h-8 text-[#1C2B33] bg-card border-[#E5E7EB]" type="date" value={datePosting} onChange={(e) => setDatePosting(e.target.value)} />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[110px_1fr_40px_1fr] gap-2 items-start sm:items-center">
-              <Label className="font-bold text-sm text-black">From</Label>
-              <Input className="h-8 text-black bg-white" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-              <Label className="font-bold text-sm sm:text-right text-black">To:</Label>
-              <Input className="h-8 text-black bg-white" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+              <Label className="font-bold text-sm text-[#1C2B33]">From</Label>
+              <Input className="h-8 text-[#1C2B33] bg-card border-[#E5E7EB]" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+              <Label className="font-bold text-sm sm:text-right text-[#1C2B33]">To:</Label>
+              <Input className="h-8 text-[#1C2B33] bg-card border-[#E5E7EB]" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
             </div>
           </div>
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1px] p-[1px] bg-gray-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1px] p-[1px] bg-border/50">
           {/* Column 1 - Income */}
-          <div className="bg-white text-black shadow-sm">
-            <div className="bg-gray-100 px-3 py-1.5 font-bold text-xs tracking-wide border-b border-gray-300 text-black uppercase">
+          <div className="bg-card text-[#1C2B33] shadow-sm">
+            <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
               Income
             </div>
             <div className="p-3 space-y-2">
               {/* Daily Rate / No of Days - labels inline with inputs */}
               <div className="grid grid-cols-[auto_1fr_auto_1fr] gap-x-3 gap-y-1 items-center">
-                <Label className="text-xs text-black">Daily Rate</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">Daily Rate</Label>
                 <Input
-                  className="h-7 text-sm text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-7 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md text-[#1C2B33]"
                   value={dailyRate}
                   onChange={(e) => setDailyRate(e.target.value)}
                 />
-                <Label className="text-xs text-black">No of Days</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">No of Days</Label>
                 <Input
-                  className="h-7 text-sm text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-7 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md text-[#1C2B33]"
                   value={noOfDays}
                   onChange={(e) => setNoOfDays(e.target.value)}
                 />
@@ -622,7 +619,7 @@ export function PayrollEntry() {
               {/* Base pay - large bold read-only spanning below */}
               <div className="py-0.5">
                 <Input
-                  className="h-8 bg-gray-100 font-bold text-right tabular-nums text-black px-2 w-full border-gray-300"
+                  className="h-8 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 w-full border-[#E5E7EB]"
                   value={basePay}
                   readOnly
                 />
@@ -630,71 +627,71 @@ export function PayrollEntry() {
 
               {/* OT rows - label | hours input | amount read-only */}
               <div className="grid grid-cols-[120px_1fr_90px_100px] gap-2 items-center">
-                <Label className="text-xs text-black">OT Reg Day</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">OT Reg Day</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={otRegDayHours}
                   onChange={(e) => setOtRegDayHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-gray-100 font-semibold text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
                   value={otRegDayAmount}
                   readOnly
                 />
               </div>
               <div className="grid grid-cols-[120px_1fr_90px_100px] gap-2 items-center">
-                <Label className="text-xs text-black">OT Sunday</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">OT Sunday</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={otSundayHours}
                   onChange={(e) => setOtSundayHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-gray-100 font-semibold text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
                   value={otSundayAmount}
                   readOnly
                 />
               </div>
               <div className="grid grid-cols-[120px_1fr_90px_100px] gap-2 items-center">
-                <Label className="text-xs text-black">OT Special</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">OT Special</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={otSpecialHours}
                   onChange={(e) => setOtSpecialHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-gray-100 font-semibold text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
                   value={otSpecialAmount}
                   readOnly
                 />
               </div>
               <div className="grid grid-cols-[120px_1fr_90px_100px] gap-2 items-center">
-                <Label className="text-xs text-black">OT Legal</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">OT Legal</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={otLegalHours}
                   onChange={(e) => setOtLegalHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-gray-100 font-semibold text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
                   value={otLegalAmount}
                   readOnly
                 />
               </div>
               <div className="grid grid-cols-[120px_1fr_90px_100px] gap-2 items-center">
-                <Label className="text-xs text-black">OT ND</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">OT ND</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={otNdHours}
                   onChange={(e) => setOtNdHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-gray-100 font-semibold text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
                   value={otNdAmount}
                   readOnly
                 />
@@ -703,7 +700,7 @@ export function PayrollEntry() {
               {/* Total OT - EXE button | bold amount */}
               <div className="flex gap-2 items-center py-0.5">
                 <Button
-                  className="h-7 w-12 bg-gray-200 hover:bg-gray-300 text-black border border-gray-400 rounded text-xs font-bold shrink-0"
+                  className="h-7 w-12 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none rounded-md text-[10px] font-black shrink-0"
                   onClick={() => {
                     recalcOtRates();
                     recalcOtAmounts();
@@ -712,7 +709,7 @@ export function PayrollEntry() {
                   EXE
                 </Button>
                 <Input
-                  className="h-7 flex-1 bg-gray-100 font-bold text-right tabular-nums text-black px-2 border-gray-300"
+                  className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-[#E5E7EB]"
                   value={totalOtPay}
                   readOnly
                 />
@@ -720,39 +717,39 @@ export function PayrollEntry() {
 
               {/* Holiday rows - label | mult input | hours input | amount read-only */}
               <div className="grid grid-cols-[70px_1fr_70px_70px_100px] gap-2 items-center">
-                <Label className="text-xs text-black">Special/hr</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">Special/hr</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-1 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={specialHolidayMult}
                   onChange={(e) => setSpecialHolidayMult(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs text-black px-1 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={specialHolidayHours}
                   onChange={(e) => setSpecialHolidayHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-gray-100 font-semibold text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
                   value={specialHolidayAmount}
                   readOnly
                 />
               </div>
               <div className="grid grid-cols-[70px_1fr_70px_70px_100px] gap-2 items-center">
-                <Label className="text-xs text-black">Legal/hr</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">Legal/hr</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-1 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={legalHolidayMult}
                   onChange={(e) => setLegalHolidayMult(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs text-black px-1 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={legalHolidayHours}
                   onChange={(e) => setLegalHolidayHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-gray-100 font-semibold text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
                   value={legalHolidayAmount}
                   readOnly
                 />
@@ -760,31 +757,33 @@ export function PayrollEntry() {
 
               {/* Total Holiday - label | EXE | amount */}
               <div className="flex gap-2 items-center py-0.5">
-                <Label className="text-xs text-black shrink-0">Total Holiday</Label>
-                <Button
-                  className="h-7 w-12 shrink-0 bg-gray-200 hover:bg-gray-300 text-black border border-gray-400 rounded text-xs font-bold"
-                  onClick={recalcHoliday}
-                >
-                  EXE
-                </Button>
-                <Input
-                  className="h-7 flex-1 bg-gray-100 font-bold text-right tabular-nums text-black px-2 border-gray-300"
-                  value={totalHoliday}
-                  readOnly
-                />
+                <Label className="text-[10px] font-black text-[#1C2B33] uppercase tracking-widest shrink-0">Total Holiday</Label>
+                <div className="flex-1 flex gap-2 justify-end">
+                  <Button
+                    className="h-7 w-12 shrink-0 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none rounded-md text-[10px] font-black"
+                    onClick={recalcHoliday}
+                  >
+                    EXE
+                  </Button>
+                  <Input
+                    className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-[#E5E7EB]"
+                    value={totalHoliday}
+                    readOnly
+                  />
+                </div>
               </div>
 
               {/* Allowance - label | editable input | read-only display */}
               <div className="grid grid-cols-[70px_1fr_70px_100px] gap-2 items-center">
-                <Label className="text-xs text-black">Allowance</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">Allowance</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={allowance}
                   onChange={(e) => setAllowance(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-gray-100 font-semibold text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
                   value={allowanceDisplay}
                   readOnly
                 />
@@ -792,20 +791,20 @@ export function PayrollEntry() {
 
               {/* O/U Pay - label | editable input */}
               <div className="grid grid-cols-[70px_1fr_100px] gap-2 items-center">
-                <Label className="text-xs text-black">O/U Pay</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33]">O/U Pay</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-black px-2 text-right tabular-nums border-gray-300"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
                   value={ouPay}
                   onChange={(e) => setOuPay(e.target.value)}
                 />
               </div>
 
               { }
-              <div className="flex gap-2 items-center pt-1">
-                <Label className="text-xs text-black font-bold shrink-0">Gross Income</Label>
+              <div className="flex gap-2 items-center pt-1 border-t border-[#E5E7EB] mt-2">
+                <Label className="text-[10px] font-black text-[#1C2B33] uppercase tracking-widest shrink-0">Gross Income</Label>
                 <Button
-                  className="h-8 w-12 shrink-0 bg-gray-200 hover:bg-gray-300 text-black border border-gray-400 rounded text-xs font-bold"
+                  className="h-8 w-12 shrink-0 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none rounded-md text-[10px] font-black"
                   onClick={() => {
                     recalcBasePay();
                     recalcOtRates();
@@ -818,7 +817,7 @@ export function PayrollEntry() {
                   EXE
                 </Button>
                 <Input
-                  className="h-9 flex-1 bg-gray-100 text-black font-bold text-right tabular-nums text-lg px-2 border-gray-300"
+                  className="h-9 flex-1 bg-white text-[#1C2B33] font-black text-right tabular-nums text-lg px-2 border-[#0082FB]/20 shadow-inner"
                   value={totalIncome}
                   readOnly
                 />
@@ -827,91 +826,91 @@ export function PayrollEntry() {
           </div>
 
           {/* Column 2 - Deductions */}
-          <div className="bg-white text-black">
-            <div className="bg-gray-100 px-3 py-1.5 font-bold text-xs tracking-wide border-b border-gray-300 text-black uppercase">
+          <div className="bg-card text-[#1C2B33]">
+            <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
               Deductions
             </div>
             <div className="p-2 space-y-1">
               <div className="grid grid-cols-[1fr_120px_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Absent (Days)</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={absentDays} onChange={(e) => setAbsentDays(e.target.value)} />
-                <Input className="h-6 text-xs bg-gray-100 text-right tabular-nums font-semibold text-black px-1" value={absentAmount} readOnly />
+                <Label className="text-xs font-bold text-[#1C2B33]">Absent (Days)</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={absentDays} onChange={(e) => setAbsentDays(e.target.value)} />
+                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-[#E5E7EB]" value={absentAmount} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Late (Minutes)</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={lateMinutes} onChange={(e) => setLateMinutes(e.target.value)} />
-                <Input className="h-6 text-xs bg-gray-100 text-right tabular-nums font-semibold text-black px-1" value={lateAmount} readOnly />
+                <Label className="text-xs font-bold text-black">Late (Minutes)</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={lateMinutes} onChange={(e) => setLateMinutes(e.target.value)} />
+                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-[#E5E7EB]" value={lateAmount} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Comms</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={comms} onChange={(e) => setComms(e.target.value)} />
+                <Label className="text-xs font-bold text-black">Comms</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={comms} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">MPL(Pag-ibig Loan)</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={mpl} readOnly />
+                <Label className="text-xs font-bold text-black">MPL(Pag-ibig Loan)</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={mpl} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">HDMF Loan(Pag-ibig Loan)</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={hdmfLoan} readOnly />
+                <Label className="text-xs font-bold text-black">HDMF Loan(Pag-ibig Loan)</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={hdmfLoan} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">SSS Loan</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={sssLoan} readOnly />
+                <Label className="text-xs font-bold text-black">SSS Loan</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={sssLoan} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black font-semibold">El Bonita Loan</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={elBonitaLoan} readOnly />
+                <Label className="text-xs font-black text-black">El Bonita Loan</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={elBonitaLoan} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Cash Advance(CA)</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={cashAdvance} readOnly />
+                <Label className="text-xs font-bold text-black">Cash Advance(CA)</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={cashAdvance} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">EGG/CAR</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={storeAcct} readOnly />
+                <Label className="text-xs font-bold text-black">EGG/CAR</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={storeAcct} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Uniform</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={uniform} readOnly />
+                <Label className="text-xs font-bold text-black">Uniform</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={uniform} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Safety shoes</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={safetyShoes} readOnly />
+                <Label className="text-xs font-bold text-black">Safety shoes</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={safetyShoes} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Food Allowance</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={foodAllowance} onChange={(e) => setFoodAllowance(e.target.value)} />
+                <Label className="text-xs font-bold text-black">Food Allowance</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={foodAllowance} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black font-semibold">Pag-Ibig/Philhealth</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={pagIbigPhilhealth} onChange={(e) => setPagIbigPhilhealth(e.target.value)} />
+                <Label className="text-xs font-black text-black">Pag-Ibig/Philhealth</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={pagIbigPhilhealth} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Rice CA</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={riceCa} onChange={(e) => setRiceCa(e.target.value)} />
+                <Label className="text-xs font-bold text-black">Rice CA</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={riceCa} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Rice</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={rice} onChange={(e) => setRice(e.target.value)} />
+                <Label className="text-xs font-bold text-black">Rice</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={rice} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">CP Loan</Label>
-                <Input className="h-6 text-xs bg-gray-100 text-slate-600 px-1 text-right tabular-nums" value={cpLoan} readOnly />
+                <Label className="text-xs font-bold text-black">CP Loan</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={cpLoan} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">SSS Penalty</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={sssPenalty} onChange={(e) => setSssPenalty(e.target.value)} />
+                <Label className="text-xs font-bold text-black">SSS Penalty</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={sssPenalty} readOnly />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs text-black">Motor URC</Label>
-                <Input className="h-6 text-xs text-black px-1 text-right tabular-nums" value={motorUrc} onChange={(e) => setMotorUrc(e.target.value)} />
+                <Label className="text-xs font-bold text-black">Motor URC</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={motorUrc} readOnly />
               </div>
 
-              <div className="flex gap-1">
-                <Label className="text-xs text-black font-bold shrink-0">Total Deduction</Label>
+              <div className="flex gap-2 items-center pt-1 border-t border-[#E5E7EB] mt-2">
+                <Label className="text-[10px] font-black text-black uppercase tracking-widest shrink-0">Total Deduction</Label>
                 <div className="flex flex-1 gap-1 items-center">
-                  <Button className="h-8 w-12 bg-gray-200 hover:bg-gray-300 text-black border border-gray-400 text-xs font-bold" onClick={() => { recalcAbsent(); recalcLate(); recalcTotalDeduction(); }}>EXE</Button>
-                  <Input className="h-8 flex-1 bg-gray-100 text-black font-bold text-right tabular-nums text-lg px-1" value={totalDeduction} readOnly />
+                  <Button className="h-8 w-12 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none text-[10px] font-black" onClick={() => { recalcAbsent(); recalcLate(); recalcTotalDeduction(); }}>EXE</Button>
+                  <Input className="h-8 flex-1 bg-white text-black font-black text-right tabular-nums text-lg px-2 border-[#E5E7EB] shadow-inner" value={totalDeduction} readOnly />
                 </div>
               </div>
 
@@ -921,87 +920,87 @@ export function PayrollEntry() {
 
           {/* Column 3 - Contributions and OT Rates */}
           <div className="bg-white space-y-[1px]">
-            <div className="bg-white text-black">
-              <div className="bg-gray-100 px-3 py-1.5 font-bold text-xs tracking-wide border-b border-gray-300 text-black uppercase">
+            <div className="bg-card text-[#1C2B33]">
+              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
                 Employee Contributions
               </div>
               <div className="p-2 space-y-1">
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                  <Label className="text-xs text-black">SSS</Label>
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={sssEmp} onChange={(e) => setSssEmp(e.target.value)} />
+                  <Label className="text-xs font-bold text-[#1C2B33]">SSS</Label>
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={sssEmp} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                  <Label className="text-xs text-black">PHIC</Label>
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={phicEmp} onChange={(e) => setPhicEmp(e.target.value)} />
+                  <Label className="text-xs font-bold text-[#1C2B33]">PHIC</Label>
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={phicEmp} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                  <Label className="text-xs text-black">HDMF</Label>
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={hdmfEmp} onChange={(e) => setHdmfEmp(e.target.value)} />
+                  <Label className="text-xs font-bold text-[#1C2B33]">HDMF</Label>
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={hdmfEmp} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                  <Label className="text-xs text-black">WTax</Label>
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={wtax} onChange={(e) => setWtax(e.target.value)} />
+                  <Label className="text-xs font-bold text-[#1C2B33]">WTax</Label>
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={wtax} readOnly />
                 </div>
                 <div className="pt-1">
                   <div className="flex gap-1">
-                    <Button className="h-7 w-12 bg-gray-200 hover:bg-gray-300 text-black border border-gray-400 text-xs font-bold" onClick={recalcEmpContribution}>EXE</Button>
-                    <Input className="h-7 flex-1 bg-gray-100 font-bold text-right tabular-nums text-black px-1 max-w-[320px] ml-auto" value={totalEmpContribution} readOnly />
+                    <Button className="h-7 w-12 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none text-[10px] font-black" onClick={recalcEmpContribution}>EXE</Button>
+                    <Input className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-[#E5E7EB]" value={totalEmpContribution} readOnly />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white text-black border-t border-gray-200">
-              <div className="bg-gray-100 px-3 py-1.5 font-bold text-xs tracking-wide border-b border-gray-300 text-black uppercase">
+            <div className="bg-card text-[#1C2B33]">
+              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
                 Employer Contributions
               </div>
               <div className="p-2 space-y-1">
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                  <Label className="text-xs text-black">SSS</Label>
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={sssEmployer} onChange={(e) => setSssEmployer(e.target.value)} />
+                  <Label className="text-xs font-bold text-[#1C2B33]">SSS</Label>
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={sssEmployer} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                  <Label className="text-xs text-black">PHIC</Label>
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={phicEmployer} onChange={(e) => setPhicEmployer(e.target.value)} />
+                  <Label className="text-xs font-bold text-[#1C2B33]">PHIC</Label>
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={phicEmployer} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
-                  <Label className="text-xs text-black">HDMF</Label>
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={hdmfEmployer} onChange={(e) => setHdmfEmployer(e.target.value)} />
+                  <Label className="text-xs font-bold text-[#1C2B33]">HDMF</Label>
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={hdmfEmployer} readOnly />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white text-black border-t border-gray-200">
-              <div className="bg-gray-100 px-3 py-1.5 font-bold text-xs tracking-wide border-b border-gray-300 text-black uppercase">
+            <div className="bg-card text-[#1C2B33]">
+              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
                 Overtime Rates Per Hour
               </div>
               <div className="p-2 space-y-1">
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
-                  <Label className="text-xs text-black">OTRegDay</Label>
-                  <Input className="h-6 text-xs bg-gray-100 text-right tabular-nums text-black px-1 w-[120px]" value={otRegDayAmount} readOnly />
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={otRegDayMult} onChange={(e) => setOtRegDayMult(e.target.value)} />
+                  <Label className="text-[11px] font-bold text-[#1C2B33]">OTRegDay</Label>
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otRegDayAmount} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-[#E5E7EB] rounded-md" value={otRegDayMult} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
-                  <Label className="text-xs text-black">OTSunday</Label>
-                  <Input className="h-6 text-xs bg-gray-100 text-right tabular-nums text-black px-1 w-[120px]" value={otSundayAmount} readOnly />
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={otSundayMult} onChange={(e) => setOtSundayMult(e.target.value)} />
+                  <Label className="text-[11px] font-bold text-[#1C2B33]">OTSunday</Label>
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otSundayAmount} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-[#E5E7EB] rounded-md" value={otSundayMult} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
-                  <Label className="text-xs text-black">OTSpecial</Label>
-                  <Input className="h-6 text-xs bg-gray-100 text-right tabular-nums text-black px-1 w-[120px]" value={otSpecialAmount} readOnly />
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={otSpecialMult} onChange={(e) => setOtSpecialMult(e.target.value)} />
+                  <Label className="text-[11px] font-bold text-[#1C2B33]">OTSpecial</Label>
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otSpecialAmount} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-[#E5E7EB] rounded-md" value={otSpecialMult} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
-                  <Label className="text-xs text-black">OTLegal</Label>
-                  <Input className="h-6 text-xs bg-gray-100 text-right tabular-nums text-black px-1 w-[120px]" value={otLegalAmount} readOnly />
-                  <Input className="h-6 text-xs text-black px-1 text-right tabular-nums w-[120px]" value={otLegalMult} onChange={(e) => setOtLegalMult(e.target.value)} />
+                  <Label className="text-[11px] font-bold text-[#1C2B33]">OTLegal</Label>
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otLegalAmount} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-[#E5E7EB] rounded-md" value={otLegalMult} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
-                  <Label className="text-xs text-black">OT ND</Label>
-                  <Input className="h-6 text-xs bg-gray-100 text-right tabular-nums text-black px-1 w-[80px]" value={otNdAmount} readOnly />
+                  <Label className="text-[11px] font-bold text-[#1C2B33]">OT ND</Label>
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[60px] border-[#E5E7EB]" value={otNdAmount} readOnly />
                   <div className="flex gap-0.5">
-                    <Input className="h-6 text-xs text-black px-1 flex-1 min-w-0 text-right tabular-nums w-[120px]" value={otNdMult1} onChange={(e) => setOtNdMult1(e.target.value)} placeholder="1.25" />
-                    <Input className="h-6 text-xs text-black px-1 flex-1 min-w-0 text-right tabular-nums w-[120px]" value={otNdMult2} onChange={(e) => setOtNdMult2(e.target.value)} placeholder=".10" />
+                    <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 flex-1 min-w-0 text-right tabular-nums w-[50px] bg-white border-[#E5E7EB] rounded-md" value={otNdMult1} readOnly />
+                    <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 flex-1 min-w-0 text-right tabular-nums w-[50px] bg-white border-[#E5E7EB] rounded-md" value={otNdMult2} readOnly />
                   </div>
                 </div>
               </div>
@@ -1009,18 +1008,18 @@ export function PayrollEntry() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 gap-4 bg-white border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 gap-4 bg-muted/10 border-t border-[#E5E7EB]">
           {/* Left side: Calculate + Print */}
           <div className="flex items-center gap-2">
             <Button
-              className="h-10 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg shadow-lg shadow-slate-200 transition-all active:scale-95"
+              className="h-10 px-6 bg-[#0082FB] hover:bg-[#0064E0] text-white font-black rounded-lg shadow-lg shadow-[#0082FB]/20 transition-all active:scale-95"
               onClick={calculateNetPay}
             >
               CALCULATE NET PAY
             </Button>
             <Button
               variant="outline"
-              className="h-9 w-10 flex items-center justify-center bg-white hover:bg-gray-50 border border-gray-300 rounded-lg text-black"
+              className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted border border-[#E5E7EB] rounded-lg text-[#1C2B33]"
             >
               <Printer className="w-4 h-4" />
             </Button>
@@ -1028,9 +1027,9 @@ export function PayrollEntry() {
 
           {/* Right side: Net Income display */}
           <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-gray-500 tracking-wide">NET INCOME</span>
-            <div className="border border-gray-300 rounded-lg px-5 py-1.5 min-w-[160px] flex items-center justify-center bg-gray-50">
-              <span className="text-[26px] leading-none font-extrabold tracking-tight tabular-nums text-red-600">
+            <span className="text-[10px] font-black text-[#1C2B33] lg:tracking-[0.2em] uppercase">Net Income</span>
+            <div className="border border-[#0082FB]/20 rounded-lg px-6 py-2 min-w-[200px] flex items-center justify-center bg-[#0082FB]/5 shadow-inner">
+              <span className="text-3xl leading-none font-black tracking-tighter tabular-nums text-[#0082FB]">
                 {netPay}
               </span>
             </div>

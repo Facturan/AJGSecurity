@@ -21,3 +21,8 @@ dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Logs and Temporary Files
+build.log
+build_error.log
+git_status_check.txt

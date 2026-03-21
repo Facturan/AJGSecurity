@@ -29,6 +29,7 @@ interface Employee {
   MonthlyRate: number;
   DTHired: string;
   ContactNo?: string;
+  AssignedCompany?: string;
 }
 
 export function EmployeeData() {
@@ -65,6 +66,7 @@ export function EmployeeData() {
     setHeaderInfo({
       title: 'EMPLOYEE DATA',
       subtitle: 'Employee Records',
+      icon: Users,
       searchPlaceholder: 'Search by name, ID, or department...',
       onSearch: (query) => setSearchTerm(query),
       onRefresh: fetchEmployees,
@@ -81,7 +83,8 @@ export function EmployeeData() {
       fullName.includes(search) ||
       emp.idno.toString().includes(search) ||
       emp.EmplID.toString().includes(search) ||
-      emp.Department?.toLowerCase().includes(search)
+      emp.Department?.toLowerCase().includes(search) ||
+      emp.AssignedCompany?.toLowerCase().includes(search)
     );
   });
 
@@ -144,11 +147,11 @@ export function EmployeeData() {
   };
 
   const handleEdit = (empId: number) => {
-    navigate(`/employee-registration?id=${empId}`);
+    navigate(`/master-data/employee-registration?id=${empId}`);
   };
 
   const handleView = (empId: number) => {
-    navigate(`/employee-registration?id=${empId}&view=true`);
+    navigate(`/master-data/employee-registration?id=${empId}&view=true`);
   };
 
   return (

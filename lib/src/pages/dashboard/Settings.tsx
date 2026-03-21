@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Moon, Sun, Monitor, SlidersHorizontal, Info, LogOut } from 'lucide-react';
+import { Moon, Sun, Monitor, SlidersHorizontal, Info, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Label } from './ui/label';
@@ -16,6 +16,7 @@ export function Settings() {
     setHeaderInfo({
       title: 'SETTINGS',
       subtitle: 'System preferences',
+      icon: SettingsIcon,
       searchPlaceholder: 'Search...',
       showSearch: false,
     });
@@ -122,7 +123,7 @@ export function Settings() {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Developer</p>
-              <p className="text-sm font-semibold">DreamTeam I.T. Solutions</p>
+              <p className="text-sm font-semibold">DT I.T. Solutions & Consultancy</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Description</p>

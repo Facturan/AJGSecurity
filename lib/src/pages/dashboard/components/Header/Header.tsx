@@ -16,50 +16,78 @@ export function Header() {
 
     return (
         <header
-            className="flex flex-col flex-shrink-0 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 z-10"
+            className="flex flex-col flex-shrink-0 bg-card border-b border-border z-10"
         >
-            <div className="flex items-center h-16 px-6 gap-6">
+            <div className="flex items-center h-20 px-6 gap-4">
+                {headerInfo.icon && (
+                    <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0",
+                        headerInfo.iconColor || "bg-gradient-to-br from-indigo-600 to-blue-500 shadow-indigo-100/50"
+                    )}>
+                        <headerInfo.icon size={20} className="text-white" />
+                    </div>
+                )}
                 <div className="flex flex-col leading-tight min-w-[200px]">
-                    <span className="text-slate-900 dark:text-slate-100 font-extrabold text-lg tracking-widest uppercase truncate">
+                    <span className="text-xl font-bold text-gray-800 tracking-tight uppercase truncate">
                         {headerInfo.title}
                     </span>
-                    <span className="text-slate-500 dark:text-slate-400 text-xs font-medium truncate">
+                    <span className="text-xs font-medium text-gray-500 truncate">
                         {headerInfo.subtitle}
                     </span>
                 </div>
 
+                {/* Left Actions */}
+                {headerInfo.leftActions && (
+                    <div className="flex items-center gap-3 ml-2">
+                        {headerInfo.leftActions}
+                    </div>
+                )}
+
                 <div className="flex-1 flex items-center justify-center max-w-2xl px-4">
                     {(headerInfo.showSearch !== false) && (
                         <div className="relative w-full group">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors group-focus-within:text-blue-500" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60 transition-colors group-focus-within:text-primary" />
                             <input
                                 type="text"
                                 value={searchValue}
-                                onChange={(e) => setSearchValue(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setSearchValue(val);
+                                    if (headerInfo.onSearch) {
+                                        headerInfo.onSearch(val);
+                                    }
+                                }}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && headerInfo.onSearch) {
                                         headerInfo.onSearch(searchValue);
                                     }
                                 }}
                                 placeholder={headerInfo.searchPlaceholder ?? 'Search...'}
-                                className="w-full bg-slate-100 dark:bg-slate-700/50 hover:bg-slate-200/50 dark:hover:bg-slate-700 border-transparent focus:border-blue-400/50 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-sm pl-10 pr-4 h-10 rounded-xl outline-none transition-all shadow-sm focus:shadow-md"
+                                className="w-full bg-background hover:bg-background/80 border-border focus:border-primary/50 focus:bg-card text-foreground placeholder-foreground/40 text-sm pl-10 pr-4 h-10 rounded-xl outline-none transition-all shadow-sm focus:shadow-md"
                             />
                         </div>
                     )}
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Custom Actions */}
+                    {headerInfo.customActions && (
+                        <div className="flex items-center gap-2 mr-2">
+                            {headerInfo.customActions}
+                        </div>
+                    )}
+
                     {/* Action Buttons */}
                     {headerInfo.onRefresh && (
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
+                            className="h-9 gap-2 border-border bg-card hover:bg-muted/50 shadow-sm"
                             onClick={headerInfo.onRefresh}
                             disabled={headerInfo.isLoading}
                         >
-                            <RefreshCw className={cn("w-4 h-4 text-slate-500", headerInfo.isLoading && "animate-spin")} />
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Refresh</span>
+                            <RefreshCw className={cn("w-4 h-4 text-muted-foreground", headerInfo.isLoading && "animate-spin")} />
+                            <span className="text-xs font-bold text-foreground/80">Refresh</span>
                         </Button>
                     )}
 
@@ -67,11 +95,11 @@ export function Header() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
+                            className="h-9 gap-2 border-border bg-card hover:bg-muted/50 shadow-sm"
                             onClick={headerInfo.onFilter}
                         >
-                            <Filter className="w-4 h-4 text-slate-500" />
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Filter</span>
+                            <Filter className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-xs font-bold text-foreground/80">Filter</span>
                         </Button>
                     )}
 
@@ -79,21 +107,38 @@ export function Header() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 gap-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 shadow-sm"
+                            className="h-9 gap-2 border-border bg-card hover:bg-muted/50 shadow-sm"
                             onClick={headerInfo.onExport}
                         >
-                            <Download className="w-4 h-4 text-slate-500" />
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Export</span>
+                            <Download className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-xs font-bold text-foreground/80">Export</span>
+                        </Button>
+                    )}
+
+                    {headerInfo.showSecondaryAction && (
+                        <Button
+                            className="gap-2 h-9 px-4 text-xs font-bold tracking-wider shadow-md bg-white border border-border hover:bg-muted/50 text-foreground"
+                            onClick={headerInfo.onSecondaryAction}
+                            disabled={headerInfo.isLoading}
+                        >
+                            {!headerInfo.isLoading && (() => {
+                                const Icon = headerInfo.secondaryActionIcon || Save;
+                                return <Icon className="w-4 h-4 text-muted-foreground" />;
+                            })()}
+                            {headerInfo.secondaryActionLabel ?? 'Action'}
                         </Button>
                     )}
 
                     {headerInfo.showPrimaryAction && (
                         <Button
-                            className="gap-2 h-9 px-4 text-xs font-bold tracking-wider shadow-md bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900"
+                            className="gap-2 h-9 px-4 text-xs font-bold tracking-wider shadow-md bg-primary hover:bg-primary/90 text-primary-foreground"
                             onClick={headerInfo.onPrimaryAction}
                             disabled={headerInfo.isLoading}
                         >
-                            {!headerInfo.isLoading && <Save className="w-4 h-4" />}
+                            {!headerInfo.isLoading && (() => {
+                                const Icon = headerInfo.primaryActionIcon || Save;
+                                return <Icon className="w-4 h-4" />;
+                            })()}
                             {headerInfo.primaryActionLabel ?? 'Save'}
                         </Button>
                     )}
@@ -102,7 +147,7 @@ export function Header() {
 
             {/* Tabs Section */}
             {headerInfo.tabs && headerInfo.tabs.length > 0 && (
-                <div className="flex items-center px-6 bg-slate-50/50 dark:bg-slate-900/20 border-t border-slate-100 dark:border-slate-700/50">
+                <div className="flex items-center px-6 bg-muted/10 border-t border-border">
                     <div className="flex gap-1 py-1">
                         {headerInfo.tabs.map((tab) => (
                             <button
@@ -111,8 +156,8 @@ export function Header() {
                                 className={cn(
                                     "px-4 py-2 text-xs font-bold tracking-wide transition-all rounded-md",
                                     tab.isActive
-                                        ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm"
-                                        : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800"
+                                        ? "bg-primary/20 text-primary shadow-sm"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                 )}
                             >
                                 {tab.label}
