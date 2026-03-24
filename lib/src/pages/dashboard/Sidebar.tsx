@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router';
+import { motion, AnimatePresence } from 'motion/react';
 import {
     LayoutDashboard,
     UserPlus,
@@ -24,7 +25,8 @@ import {
     CreditCard,
     CalendarClock,
     BookOpen,
-    FileText
+    FileText,
+    Calculator
 } from 'lucide-react';
 import { PesoIcon } from './icons/PesoIcon';
 import React, { useState, useEffect } from 'react';
@@ -57,7 +59,7 @@ const navItems: NavItem[] = [
             { to: '/company/customer-list', label: 'Customer List', icon: Users2 },
         ]
     },
-    { to: '/payroll-entry', label: 'Payroll Data Entry', icon: PesoIcon },
+    { to: '/payroll-entry', label: 'Payroll Data Entry', icon: Calculator },
     {
         label: 'Loans / Deduct',
         icon: PesoIcon,
@@ -170,7 +172,6 @@ function SidebarInner() {
             return;
         }
         setOpenMenus(prev => ({
-            ...prev,
             [label]: !prev[label]
         }));
     };
@@ -244,29 +245,44 @@ function SidebarInner() {
                                             {isExpanded && <span className="truncate">{label}</span>}
                                         </div>
                                         {isExpanded && (
-                                            isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+                                            <motion.div
+                                                animate={{ rotate: isOpen ? 90 : 0 }}
+                                                transition={{ duration: 0.2, ease: "easeInOut" }}
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </motion.div>
                                         )}
                                     </button>
-                                    {isOpen && isExpanded && (
-                                        <div className="ml-4 pl-4 border-l border-border space-y-1 mt-1">
-                                            {children.map((child) => (
-                                                <NavLink
-                                                    key={child.to}
-                                                    to={child.to}
-                                                    end={child.end}
-                                                    className={({ isActive }) =>
-                                                        `flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 active:scale-[0.97] ${isActive
-                                                            ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm border border-sidebar-primary/20'
-                                                            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-                                                        }`
-                                                    }
-                                                >
-                                                    <child.icon className="w-4 h-4 shrink-0" />
-                                                    <span className="truncate">{child.label}</span>
-                                                </NavLink>
-                                            ))}
-                                        </div>
-                                    )}
+                                    <AnimatePresence>
+                                        {isOpen && isExpanded && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: "auto", opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.3, ease: [0.04, 0.62, 0.23, 0.98] }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="ml-4 pl-4 border-l border-sidebar-border/50 space-y-1 mt-1 mb-2">
+                                                    {children.map((child) => (
+                                                        <NavLink
+                                                            key={child.to}
+                                                            to={child.to}
+                                                            end={child.end}
+                                                            className={({ isActive }) =>
+                                                                `flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 active:scale-[0.97] ${isActive
+                                                                    ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm border border-sidebar-primary/20'
+                                                                    : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                                                                }`
+                                                            }
+                                                        >
+                                                            <child.icon className="w-4 h-4 shrink-0" />
+                                                            <span className="truncate">{child.label}</span>
+                                                        </NavLink>
+                                                    ))}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             );
                         }
@@ -325,7 +341,7 @@ function SidebarInner() {
             </aside>
 
             {/* Main Section (Header + Content) */}
-            <div className="flex flex-col flex-1 overflow-hidden w-full">
+            <div className="flex flex-col flex-1 overflow-hidden">
                 {/* Mobile Top Nav */}
                 <div className="lg:hidden h-16 flex items-center justify-between px-4 bg-sidebar border-b border-sidebar-border flex-shrink-0 z-20">
                     <div className="flex items-center gap-3">

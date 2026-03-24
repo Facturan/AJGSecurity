@@ -206,8 +206,8 @@ function CategoryDropdown({
                       setOpen(false);
                     }}
                     className={`flex items-center justify-between w-full px-3.5 py-2 transition-colors ${isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-foreground/70 hover:bg-muted/50"
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground/70 hover:bg-muted/50"
                       }`}
                   >
                     <span className="text-xs">{opt}</span>
@@ -339,8 +339,8 @@ function DayColumn({ day, onDelete, onEdit }: { day: Day; onDelete: (id: string)
     <motion.div
       layout
       className={`flex-1 min-w-0 rounded-2xl p-4 flex flex-col gap-3 border transition-colors ${day.isToday
-          ? "bg-gradient-to-b from-indigo-50 to-blue-50/50 border-indigo-200 shadow-md shadow-indigo-100/60"
-          : "bg-white border-gray-100 shadow-sm"
+        ? "bg-gradient-to-b from-indigo-50 to-blue-50/50 border-indigo-200 shadow-md shadow-indigo-100/60"
+        : "bg-white border-gray-100 shadow-sm"
         }`}
     >
       <div className="mb-1">
@@ -629,7 +629,7 @@ export function ScheduleView() {
           <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-indigo-50/50 to-transparent" />
         </div>
 
-        <div className="relative max-w-screen-2xl mx-auto px-6 py-3 flex items-center gap-3">
+        <div className="relative max-w-screen-2xl mx-auto px-6 h-16 flex items-center gap-3">
 
           {/* ── Brand ── */}
           <div className="flex items-center gap-2.5 flex-shrink-0">
@@ -650,17 +650,17 @@ export function ScheduleView() {
             <button
               onClick={() => setWeekIndex((i) => Math.max(0, i - 1))}
               disabled={weekIndex === 0}
-              className="w-7 h-7 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 disabled:opacity-25 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="w-7 h-7 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
             >
               <ChevronLeft size={13} />
             </button>
 
             {/* Date pill */}
-            <div className="flex flex-col items-center px-3 py-1 rounded-xl bg-background border border-border min-w-[160px] shadow-sm">
+            <div className="flex flex-col items-center px-4 py-1.5 rounded-xl border border-border/50 min-w-[170px]">
               <span className="text-foreground font-bold text-sm leading-tight tracking-tight">
                 {weekLabel}
               </span>
-              <span className="text-muted-foreground/70 text-[10px] leading-tight mt-0.5 font-medium">
+              <span className="text-muted-foreground/60 text-[10px] leading-tight mt-0.5 font-medium">
                 {isCurrentWeek ? "Current Week" : `Week ${weekIndex + 1}`}
               </span>
             </div>
@@ -668,7 +668,7 @@ export function ScheduleView() {
             <button
               onClick={() => setWeekIndex((i) => Math.min(weeks.length - 1, i + 1))}
               disabled={weekIndex === weeks.length - 1}
-              className="w-7 h-7 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/50 disabled:opacity-25 disabled:cursor-not-allowed transition-all shadow-sm"
+              className="w-7 h-7 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
             >
               <ChevronRight size={13} />
             </button>
@@ -679,11 +679,11 @@ export function ScheduleView() {
 
           {/* ── Stats ── */}
           <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center gap-1.5 bg-background border border-border rounded-full px-3 py-1 shadow-sm">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/40">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="text-foreground/70 text-[11px] font-medium">{totalEvents} events</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-background border border-border rounded-full px-3 py-1 shadow-sm">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/40">
               <Users size={10} className="text-indigo-500/70" />
               <span className="text-foreground/70 text-[11px] font-medium">{totalAttendees} attendees</span>
             </div>
@@ -699,7 +699,7 @@ export function ScheduleView() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search..."
-              className="bg-background border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-1 focus:ring-primary/20 focus:bg-card transition w-32 lg:w-40 shadow-sm"
+              className="bg-black/[0.03] hover:bg-black/[0.05] rounded-full border-none pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-background transition-all w-32 lg:w-40"
             />
           </div>
 
@@ -710,7 +710,7 @@ export function ScheduleView() {
           <div className="relative flex-shrink-0">
             <button
               onClick={() => setNotifOpen((v) => !v)}
-              className="relative w-9 h-9 rounded-xl bg-background border border-border flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted/50 transition-all shadow-sm"
+              className="relative w-9 h-9 rounded-full border-none hover:bg-black/[0.05] flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
             >
               <Bell size={15} />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />

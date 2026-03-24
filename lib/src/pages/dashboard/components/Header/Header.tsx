@@ -16,9 +16,9 @@ export function Header() {
 
     return (
         <header
-            className="flex flex-col flex-shrink-0 bg-card border-b border-border z-10"
+            className="flex flex-col flex-shrink-0 bg-card border-b border-border relative z-10"
         >
-            <div className="flex items-center h-20 px-6 gap-4">
+            <div className="flex items-center h-16 px-6 gap-4">
                 {headerInfo.icon && (
                     <div className={cn(
                         "w-10 h-10 rounded-xl flex items-center justify-center shadow-lg shrink-0",
@@ -63,7 +63,7 @@ export function Header() {
                                     }
                                 }}
                                 placeholder={headerInfo.searchPlaceholder ?? 'Search...'}
-                                className="w-full bg-background hover:bg-background/80 border-border focus:border-primary/50 focus:bg-card text-foreground placeholder-foreground/40 text-sm pl-10 pr-4 h-10 rounded-xl outline-none transition-all shadow-sm focus:shadow-md"
+                                className="w-full bg-black/[0.03] hover:bg-black/[0.05] border-none focus:bg-background text-foreground placeholder:text-muted-foreground/50 text-sm pl-10 pr-4 h-10 rounded-full outline-none transition-all focus:ring-2 focus:ring-primary/20"
                             />
                         </div>
                     )}
@@ -149,7 +149,7 @@ export function Header() {
             {headerInfo.tabs && headerInfo.tabs.length > 0 && (
                 <div className="flex items-center px-6 bg-muted/10 border-t border-border">
                     <div className="flex gap-1 py-1">
-                        {headerInfo.tabs.map((tab) => (
+                        {headerInfo.tabs?.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={tab.onClick}

@@ -177,7 +177,7 @@ export function LeaveCreditView() {
             className="h-11 px-6 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20 gap-2 shrink-0"
           >
             <Plus className="w-5 h-5" />
-            Apply for Leave
+            Leave Application
           </Button>
         </div>
       </div>

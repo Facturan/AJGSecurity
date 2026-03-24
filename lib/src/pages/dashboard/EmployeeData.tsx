@@ -71,7 +71,6 @@ export function EmployeeData() {
       onSearch: (query) => setSearchTerm(query),
       onRefresh: fetchEmployees,
       onFilter: () => toast.info('Filter functionality coming soon'),
-      onExport: () => toast.info('Export functionality coming soon'),
       isLoading: isLoading
     });
   }, [isLoading, setHeaderInfo]);

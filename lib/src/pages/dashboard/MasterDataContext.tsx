@@ -88,10 +88,16 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
       }
       if (depts) setDepartments(depts);
       if (stats) setEmployeeStatuses(stats.map(s => s.name));
-      if (fModels) setFirearmModels(fModels.map((f: any) => f.name));
-      if (fCalibers) setFirearmCalibers(fCalibers.map((f: any) => f.name));
-      if (fMakes) setFirearmMakes(fMakes.map((f: any) => f.name));
-      if (fKinds) setFirearmKinds(fKinds.map((f: any) => f.name));
+      // Fallback data for firearms (if Supabase returns 404/Empty)
+      const defaultModels = ['G-17', 'M-30', 'PATROL', '1911', 'M4A1'];
+      const defaultCalibers = ['9MM', '38', '12GA', '45 ACP', '5.56'];
+      const defaultMakes = ['GLOCK', 'COLT', 'ARMSCOR', 'BERETTA', 'SIG SAUER'];
+      const defaultKinds = ['PISTL', 'RVLVR', 'SHTGN', 'RIFLE'];
+
+      setFirearmModels(fModels && fModels.length > 0 ? fModels.map((f: any) => f.name) : defaultModels);
+      setFirearmCalibers(fCalibers && fCalibers.length > 0 ? fCalibers.map((f: any) => f.name) : defaultCalibers);
+      setFirearmMakes(fMakes && fMakes.length > 0 ? fMakes.map((f: any) => f.name) : defaultMakes);
+      setFirearmKinds(fKinds && fKinds.length > 0 ? fKinds.map((f: any) => f.name) : defaultKinds);
       if (lTypes) {
         setLoanTypes(lTypes.map((lt: any) => ({
           loanId: lt.loanId,

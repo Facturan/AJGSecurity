@@ -62,13 +62,13 @@ export function AttendanceView() {
       record.department.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === "all" || record.status === filterStatus;
     const matchesDept = filterDepartment === "all" || record.department === filterDepartment;
-    
+
     // Employee ID filter (matching against record.id)
     const matchesId = !searchEmployeeId || record.id.toLowerCase().includes(searchEmployeeId.toLowerCase());
-    
+
     // Date filter (For demo purposes, matching matchesSearch as records don't have full dates yet)
     // In a real app, you'd parse record.date and compare with fromDate/toDate
-    
+
     return matchesSearch && matchesStatus && matchesDept && matchesId;
   });
 

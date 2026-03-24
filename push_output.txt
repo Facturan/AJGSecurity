@@ -1,0 +1,23 @@
+﻿git : To https://github.
+com/Facturan/AJGSecurity
+.git
+At line:1 char:1
++ git push origin main 
+2>&1 | Out-File 
+-FilePath 
+push_output.txt -Encod 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~
+~~~
+    + CategoryInfo      
+        : NotSpecified  
+  : (To https://gith.   
+ ..AJGSecurity.git:S    
+tring) [], RemoteEx    
+ception
+    + FullyQualifiedErr 
+   orId : NativeComman  
+  dError
+ 
+   b96bc447..06ad13c8  
+main -> main
