@@ -30,6 +30,8 @@ export function PayrollEntry() {
   const [selectedEmpId, setSelectedEmpId] = useState<string>('');
   const [empName, setEmpName] = useState('');
   const [empIdNo, setEmpIdNo] = useState('');
+  const [empDailyRate, setEmpDailyRate] = useState(0);
+  const [empMonthlyRate, setEmpMonthlyRate] = useState(0);
   const [salaryMethod, setSalaryMethod] = useState('daily');
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,6 +66,14 @@ export function PayrollEntry() {
   const [totalHoliday, setTotalHoliday] = useState('');
   const [allowance, setAllowance] = useState('');
   const [allowanceDisplay, setAllowanceDisplay] = useState('');
+  const [incentiveRate, setIncentiveRate] = useState('');
+  const [incentiveAmount, setIncentiveAmount] = useState('');
+  const [cashGasAllowance, setCashGasAllowance] = useState('');
+  const [foodAllowanceIncome, setFoodAllowanceIncome] = useState('');
+  const [loadAllowance, setLoadAllowance] = useState('');
+  const [incentivesIncome, setIncentivesIncome] = useState('');
+  const [commsIncome, setCommsIncome] = useState('');
+  const [otRefund, setOtRefund] = useState('');
   const [ouPay, setOuPay] = useState('');
   const [totalIncome, setTotalIncome] = useState('');
 
@@ -86,8 +96,11 @@ export function PayrollEntry() {
   const [riceCa, setRiceCa] = useState('');
   const [rice, setRice] = useState('');
   const [cpLoan, setCpLoan] = useState('');
-  const [sssPenalty, setSssPenalty] = useState('');
+  const [sssPenaltyJohndorf, setSssPenaltyJohndorf] = useState('');
+  const [thailandCA, setThailandCA] = useState('');
   const [motorUrc, setMotorUrc] = useState('');
+  const [chx, setChx] = useState('');
+  const [flagXUniform, setFlagXUniform] = useState('');
   const [totalDeduction, setTotalDeduction] = useState('');
 
   // Employee Contribution
@@ -126,6 +139,16 @@ export function PayrollEntry() {
     fetchEmployees();
   }, [setHeaderInfo]);
 
+  useEffect(() => {
+    if (selectedEmpId) {
+      if (salaryMethod === 'monthly') {
+        setDailyRate(formatNumber(empMonthlyRate));
+      } else {
+        setDailyRate(formatNumber(empDailyRate));
+      }
+    }
+  }, [salaryMethod, selectedEmpId, empDailyRate, empMonthlyRate]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -136,6 +159,13 @@ export function PayrollEntry() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Sync input value when dropdown closes
+  useEffect(() => {
+    if (!open && selectedEmpId) {
+      setSearchQuery(empName);
+    }
+  }, [open, selectedEmpId, empName]);
 
   const fetchEmployees = async () => {
     try {
@@ -154,11 +184,14 @@ export function PayrollEntry() {
   const handleSelectEmployee = async (emplID: string) => {
     const emp = employees.find(e => e.EmplID.toString() === emplID);
     if (emp) {
+      const fullName = `${emp.Fname} ${emp.LName}`.trim();
       setSelectedEmpId(emplID);
       setEmpIdNo(emp.idno);
-      setEmpName(`${emp.Fname} ${emp.LName}`.trim());
-      setSalaryMethod(emp.EmpRate || 'daily');
-      setDailyRate(formatNumber(emp.DailyRate || 0));
+      setEmpName(fullName);
+      setSearchQuery(fullName);
+      setEmpDailyRate(emp.DailyRate || 0);
+      setEmpMonthlyRate(emp.MonthlyRate || 0);
+      setSalaryMethod(emp.EmpRate?.toLowerCase() || 'daily');
 
       // Populate Contributions
       setSssEmp(formatNumber(emp.MempSSS || 0));
@@ -248,6 +281,14 @@ export function PayrollEntry() {
         TotalHoliday: parseInput(totalHoliday),
         AllowanceRate: parseInput(allowance),
         TotalAllowance: parseInput(allowanceDisplay),
+        FiveDaysIncentiveDays: parseInput(noOfDays),
+        FiveDaysIncentiveAmount: parseInput(incentiveAmount),
+        CashGasAllowance: parseInput(cashGasAllowance),
+        FoodAllowanceIncome: parseInput(foodAllowanceIncome),
+        LoadAllowance: parseInput(loadAllowance),
+        IncentivesIncome: parseInput(incentivesIncome),
+        CommsIncome: parseInput(commsIncome),
+        OTRefund: parseInput(otRefund),
         OverUnderPay: parseInput(ouPay),
         TotalIncome: parseInput(totalIncome),
         Absent: parseInput(absentDays),
@@ -279,8 +320,11 @@ export function PayrollEntry() {
         RiceCA: parseInput(riceCa),
         Rice: parseInput(rice),
         CPLoan: parseInput(cpLoan),
-        SSSPenalty: parseInput(sssPenalty),
-        MotorURC: parseInput(motorUrc)
+        SSSPenaltyJohndorf: parseInput(sssPenaltyJohndorf),
+        ThailandCA: parseInput(thailandCA),
+        MotorURC: parseInput(motorUrc),
+        CHX: parseInput(chx),
+        FlagXUniform: parseInput(flagXUniform)
       };
 
       const { error } = await supabase
@@ -304,6 +348,7 @@ export function PayrollEntry() {
     setDateFrom('');
     setDateTo('');
     setSearchQuery('');
+    setOpen(false);
     // Income
     setDailyRate(''); setNoOfDays(''); setBasePay('');
     setOtRegDayHours(''); setOtRegDayAmount('');
@@ -315,7 +360,10 @@ export function PayrollEntry() {
     setSpecialHolidayMult(''); setSpecialHolidayHours(''); setSpecialHolidayAmount('');
     setLegalHolidayMult(''); setLegalHolidayHours(''); setLegalHolidayAmount('');
     setTotalHoliday('');
-    setAllowance(''); setAllowanceDisplay(''); setOuPay(''); setTotalIncome('');
+    setAllowance(''); setAllowanceDisplay(''); setIncentiveRate(''); setIncentiveAmount('');
+    setCashGasAllowance(''); setFoodAllowanceIncome(''); setLoadAllowance('');
+    setIncentivesIncome(''); setCommsIncome(''); setOtRefund('');
+    setOuPay(''); setTotalIncome('');
     // Deductions
     setAbsentDays(''); setAbsentAmount('');
     setLateMinutes(''); setLateAmount('');
@@ -323,7 +371,7 @@ export function PayrollEntry() {
     setElBonitaLoan(''); setCashAdvance(''); setStoreAcct('');
     setUniform(''); setSafetyShoes(''); setFoodAllowance('');
     setPagIbigPhilhealth(''); setRiceCa(''); setRice('');
-    setCpLoan(''); setSssPenalty(''); setMotorUrc('');
+    setCpLoan(''); setSssPenaltyJohndorf(''); setThailandCA(''); setMotorUrc(''); setChx(''); setFlagXUniform('');
     setTotalDeduction('');
     // Contributions
     setSssEmp(''); setPhicEmp(''); setHdmfEmp(''); setWtax('');
@@ -340,7 +388,7 @@ export function PayrollEntry() {
 
   const recalcOtRates = useCallback(() => {
     const rate = parseInput(dailyRate);
-    const hr = rate / 8;
+    const hr = salaryMethod === 'monthly' ? (empDailyRate > 0 ? empDailyRate / 8 : (rate / 26) / 8) : rate / 8;
     const otReg = hr * parseInput(otRegDayMult);
     const otSun = hr * parseInput(otSundayMult);
     const otSpec = hr * parseInput(otSpecialMult);
@@ -351,7 +399,7 @@ export function PayrollEntry() {
     setOtSpecialAmount(formatNumber(otSpec));
     setOtLegalAmount(formatNumber(otLeg));
     setOtNdAmount(formatNumber(otNd));
-  }, [dailyRate, otRegDayMult, otSundayMult, otSpecialMult, otLegalMult, otNdMult1, otNdMult2]);
+  }, [dailyRate, otRegDayMult, otSundayMult, otSpecialMult, otLegalMult, otNdMult1, otNdMult2, salaryMethod, empDailyRate]);
 
   const recalcOtAmounts = useCallback(() => {
     const reg = parseInput(otRegDayAmount) * parseInput(otRegDayHours);
@@ -364,17 +412,27 @@ export function PayrollEntry() {
   }, [otRegDayAmount, otRegDayHours, otSundayAmount, otSundayHours, otSpecialAmount, otSpecialHours, otLegalAmount, otLegalHours, otNdAmount, otNdHours]);
 
   const recalcHoliday = useCallback(() => {
-    const hr = parseInput(dailyRate) / 8;
+    const dRate = parseInput(dailyRate);
+    const actualDailyRate = salaryMethod === 'monthly' ? (empDailyRate > 0 ? empDailyRate : dRate / 26) : dRate;
+    const hr = actualDailyRate / 8;
     const special = parseInput(specialHolidayMult) * parseInput(specialHolidayHours) * hr;
     const legal = parseInput(legalHolidayMult) * parseInput(legalHolidayHours) * hr;
     setSpecialHolidayAmount(formatNumber(special));
     setLegalHolidayAmount(formatNumber(legal));
     setTotalHoliday(formatNumber(special + legal));
-  }, [dailyRate, specialHolidayMult, specialHolidayHours, legalHolidayMult, legalHolidayHours]);
+  }, [dailyRate, specialHolidayMult, specialHolidayHours, legalHolidayMult, legalHolidayHours, salaryMethod, empDailyRate]);
 
   const recalcAllowance = useCallback(() => {
     setAllowanceDisplay(allowance);
   }, [allowance]);
+
+  const recalcIncentive = useCallback(() => {
+    const dRate = parseInput(dailyRate);
+    const rate = (dRate * 5 / 12 / 31);
+    const amt = rate * parseInput(noOfDays);
+    setIncentiveAmount(formatNumber(amt));
+    setIncentiveRate(formatNumber(rate));
+  }, [dailyRate, noOfDays]);
 
 
   const recalcTotalIncome = useCallback(() => {
@@ -382,20 +440,31 @@ export function PayrollEntry() {
     const ot = parseInput(totalOtPay);
     const holiday = parseInput(totalHoliday);
     const allow = parseInput(allowanceDisplay);
+    const incentive = parseInput(incentiveAmount);
+    const cashGas = parseInput(cashGasAllowance);
+    const food = parseInput(foodAllowanceIncome);
+    const load = parseInput(loadAllowance);
+    const incentivesInc = parseInput(incentivesIncome);
+    const commsInc = parseInput(commsIncome);
+    const refund = parseInput(otRefund);
     const ou = parseInput(ouPay);
-    const total = base + ot + holiday + allow + ou;
+    const total = base + ot + holiday + allow + incentive + cashGas + food + load + incentivesInc + commsInc + refund + ou;
     setTotalIncome(formatNumber(total));
-  }, [basePay, totalOtPay, totalHoliday, allowanceDisplay, ouPay]);
+  }, [basePay, totalOtPay, totalHoliday, allowanceDisplay, incentiveAmount, cashGasAllowance, foodAllowanceIncome, loadAllowance, incentivesIncome, commsIncome, otRefund, ouPay]);
 
   const recalcAbsent = useCallback(() => {
-    const amt = parseInput(absentDays) * parseInput(dailyRate);
+    const dRate = parseInput(dailyRate);
+    const actualDailyRate = salaryMethod === 'monthly' ? (empDailyRate > 0 ? empDailyRate : dRate / 26) : dRate;
+    const amt = parseInput(absentDays) * actualDailyRate;
     setAbsentAmount(formatNumber(amt));
-  }, [absentDays, dailyRate]);
+  }, [absentDays, dailyRate, salaryMethod, empDailyRate]);
 
   const recalcLate = useCallback(() => {
-    const amt = (parseInput(lateMinutes) / 60) * (parseInput(dailyRate) / 8);
+    const dRate = parseInput(dailyRate);
+    const actualDailyRate = salaryMethod === 'monthly' ? (empDailyRate > 0 ? empDailyRate : dRate / 26) : dRate;
+    const amt = (parseInput(lateMinutes) / 60) * (actualDailyRate / 8);
     setLateAmount(formatNumber(amt));
-  }, [lateMinutes, dailyRate]);
+  }, [lateMinutes, dailyRate, salaryMethod, empDailyRate]);
 
   const recalcTotalDeduction = useCallback(() => {
     const total =
@@ -415,10 +484,13 @@ export function PayrollEntry() {
       parseInput(riceCa) +
       parseInput(rice) +
       parseInput(cpLoan) +
-      parseInput(sssPenalty) +
-      parseInput(motorUrc);
+      parseInput(sssPenaltyJohndorf) +
+      parseInput(thailandCA) +
+      parseInput(motorUrc) +
+      parseInput(chx) +
+      parseInput(flagXUniform);
     setTotalDeduction(formatNumber(total));
-  }, [absentAmount, lateAmount, comms, mpl, hdmfLoan, sssLoan, elBonitaLoan, cashAdvance, storeAcct, uniform, safetyShoes, foodAllowance, pagIbigPhilhealth, riceCa, rice, cpLoan, sssPenalty, motorUrc]);
+  }, [absentAmount, lateAmount, comms, mpl, hdmfLoan, sssLoan, elBonitaLoan, cashAdvance, storeAcct, uniform, safetyShoes, foodAllowance, pagIbigPhilhealth, riceCa, rice, cpLoan, sssPenaltyJohndorf, thailandCA, motorUrc, chx, flagXUniform]);
 
   const recalcEmpContribution = useCallback(() => {
     const total = parseInput(sssEmp) + parseInput(phicEmp) + parseInput(hdmfEmp) + parseInput(wtax);
@@ -431,6 +503,7 @@ export function PayrollEntry() {
     recalcOtAmounts();
     recalcHoliday();
     recalcAllowance();
+    recalcIncentive();
     recalcTotalIncome();
     recalcAbsent();
     recalcLate();
@@ -438,7 +511,8 @@ export function PayrollEntry() {
     recalcEmpContribution();
 
     const dRate = parseInput(dailyRate);
-    const hr = dRate / 8;
+    const actualDailyRate = salaryMethod === 'monthly' ? (empDailyRate > 0 ? empDailyRate : dRate / 26) : dRate;
+    const hr = actualDailyRate / 8;
 
     // Sync Income calculation
     const base = dRate * parseInput(noOfDays);
@@ -454,16 +528,20 @@ export function PayrollEntry() {
     const legHol = hr * parseInput(legalHolidayMult) * parseInput(legalHolidayHours);
     const totalHol = specHol + legHol;
 
-    const income = base + totalOt + totalHol + parseInput(allowance) + parseInput(ouPay);
+    const incentiveAmt = (dRate * parseInput(noOfDays) * 5 / 12 / 31);
+    const income = base + totalOt + totalHol + parseInput(allowance) + incentiveAmt
+      + parseInput(cashGasAllowance) + parseInput(foodAllowanceIncome) + parseInput(loadAllowance)
+      + parseInput(incentivesIncome) + parseInput(commsIncome) + parseInput(otRefund)
+      + parseInput(ouPay);
 
     const deduction =
-      parseInput(absentDays) * dRate +
+      parseInput(absentDays) * actualDailyRate +
       (parseInput(lateMinutes) / 60) * hr +
       parseInput(comms) + parseInput(mpl) + parseInput(hdmfLoan) + parseInput(sssLoan) +
       parseInput(elBonitaLoan) +
       parseInput(cashAdvance) + parseInput(storeAcct) + parseInput(uniform) + parseInput(safetyShoes) +
       parseInput(foodAllowance) + parseInput(pagIbigPhilhealth) +
-      parseInput(riceCa) + parseInput(rice) + parseInput(cpLoan) + parseInput(sssPenalty) + parseInput(motorUrc);
+      parseInput(riceCa) + parseInput(rice) + parseInput(cpLoan) + parseInput(sssPenaltyJohndorf) + parseInput(thailandCA) + parseInput(motorUrc);
 
     const contribution = parseInput(sssEmp) + parseInput(phicEmp) + parseInput(hdmfEmp) + parseInput(wtax);
 
@@ -471,8 +549,9 @@ export function PayrollEntry() {
     setNetPay(formatNumber(Math.max(0, net)));
   }, [dailyRate, noOfDays, otRegDayMult, otRegDayHours, otSundayMult, otSundayHours, otSpecialMult, otSpecialHours,
     otLegalMult, otLegalHours, otNdMult1, otNdMult2, otNdHours, specialHolidayMult, specialHolidayHours, legalHolidayMult, legalHolidayHours,
-    allowance, ouPay, absentDays, lateMinutes, comms, mpl, hdmfLoan, sssLoan, elBonitaLoan, cashAdvance, storeAcct, uniform, safetyShoes, foodAllowance, pagIbigPhilhealth, riceCa, rice, cpLoan, sssPenalty, motorUrc,
-    sssEmp, phicEmp, hdmfEmp, wtax, recalcBasePay, recalcOtRates, recalcOtAmounts, recalcHoliday, recalcAllowance, recalcTotalIncome, recalcAbsent, recalcLate, recalcTotalDeduction, recalcEmpContribution]);
+    allowance, incentiveRate, cashGasAllowance, foodAllowanceIncome, loadAllowance, incentivesIncome, commsIncome, otRefund, ouPay,
+    absentDays, lateMinutes, comms, mpl, hdmfLoan, sssLoan, elBonitaLoan, cashAdvance, storeAcct, uniform, safetyShoes, foodAllowance, pagIbigPhilhealth, riceCa, rice, cpLoan, sssPenaltyJohndorf, thailandCA, motorUrc, chx, flagXUniform,
+    sssEmp, phicEmp, hdmfEmp, wtax, recalcBasePay, recalcOtRates, recalcOtAmounts, recalcHoliday, recalcAllowance, recalcIncentive, recalcTotalIncome, recalcAbsent, recalcLate, recalcTotalDeduction, recalcEmpContribution, salaryMethod, empDailyRate]);
 
   useEffect(() => {
     if (!selectedEmpId) {
@@ -482,7 +561,8 @@ export function PayrollEntry() {
     calculateNetPay();
   }, [selectedEmpId, dailyRate, noOfDays, otRegDayMult, otRegDayHours, otSundayMult, otSundayHours, otSpecialMult, otSpecialHours,
     otLegalMult, otLegalHours, otNdMult1, otNdMult2, otNdHours, specialHolidayMult, specialHolidayHours, legalHolidayMult, legalHolidayHours,
-    allowance, ouPay, absentDays, lateMinutes, comms, mpl, hdmfLoan, sssLoan, elBonitaLoan, cashAdvance, storeAcct, uniform, safetyShoes, foodAllowance, pagIbigPhilhealth, riceCa, rice, cpLoan, sssPenalty, motorUrc,
+    allowance, incentiveRate, cashGasAllowance, foodAllowanceIncome, loadAllowance, incentivesIncome, commsIncome, otRefund, ouPay,
+    absentDays, lateMinutes, comms, mpl, hdmfLoan, sssLoan, elBonitaLoan, cashAdvance, storeAcct, uniform, safetyShoes, foodAllowance, pagIbigPhilhealth, riceCa, rice, cpLoan, sssPenaltyJohndorf, thailandCA, motorUrc, chx, flagXUniform,
     sssEmp, phicEmp, hdmfEmp, wtax, calculateNetPay]);
 
 
@@ -500,33 +580,34 @@ export function PayrollEntry() {
             <div className="grid grid-cols-1 sm:grid-cols-[80px_308px_1fr] gap-2 items-start sm:items-center">
               <Label className="font-bold text-sm text-[#1C2B33]">Employee</Label>
               <div className="relative" ref={dropdownRef}>
-                {/* Trigger button */}
-                <button
-                  type="button"
-                  onClick={() => { setOpen(prev => !prev); setSearchQuery(''); }}
-                  className="h-8 w-full flex items-center justify-between bg-card border border-[#E5E7EB] rounded-md px-3 text-[#1C2B33] font-bold text-sm hover:bg-muted/50 focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all"
-                >
-                  <span className="truncate">
-                    {selectedEmpId ? empName : ''}
-                  </span>
-                  <ChevronDown className={`ml-2 h-4 w-4 shrink-0 text-[#1C2B33] transition-transform ${open ? 'rotate-180' : ''}`} />
-                </button>
+                <div className="relative flex items-center w-full">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    placeholder="Type name or ID..."
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      if (!open) setOpen(true);
+                      if (selectedEmpId) {
+                        setSelectedEmpId('');
+                        setEmpIdNo('');
+                        setEmpName('');
+                      }
+                    }}
+                    onFocus={() => {
+                      setOpen(true);
+                      setSearchQuery('');
+                    }}
+                    className="h-8 w-full bg-card border border-[#E5E7EB] rounded-md pl-3 pr-8 text-[#1C2B33] font-bold text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:font-normal placeholder:text-muted-foreground/50"
+                  />
+                  <ChevronDown
+                    className={`absolute right-3 h-4 w-4 shrink-0 text-[#1C2B33] pointer-events-none transition-transform ${open ? 'rotate-180' : ''}`}
+                  />
+                </div>
 
                 {/* Dropdown panel */}
                 {open && (
                   <div className="absolute z-50 mt-1 w-full bg-card border border-[#E5E7EB] rounded-md shadow-2xl overflow-hidden backdrop-blur-xl">
-                    {/* Search input */}
-                    <div className="flex items-center border-b border-[#E5E7EB] px-3">
-                      <Search className="h-4 w-4 text-[#1C2B33] shrink-0 mr-2" />
-                      <input
-                        autoFocus
-                        type="text"
-                        placeholder="Search by name or ID..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-9 text-sm text-[#1C2B33] bg-transparent outline-none placeholder:text-[#1C2B33]"
-                      />
-                    </div>
                     {/* Results list */}
                     <div className="max-h-[260px] overflow-y-auto">
                       {employees
@@ -602,7 +683,7 @@ export function PayrollEntry() {
             <div className="p-3 space-y-2">
               {/* Daily Rate / No of Days - labels inline with inputs */}
               <div className="grid grid-cols-[auto_1fr_auto_1fr] gap-x-3 gap-y-1 items-center">
-                <Label className="text-[11px] font-bold text-[#1C2B33]">Daily Rate</Label>
+                <Label className="text-[11px] font-bold text-[#1C2B33] whitespace-nowrap">{salaryMethod === 'monthly' ? 'Monthly Rate' : 'Daily Rate'}</Label>
                 <Input
                   className="h-7 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md text-[#1C2B33]"
                   value={dailyRate}
@@ -616,11 +697,36 @@ export function PayrollEntry() {
                 />
               </div>
 
-              {/* Base pay - large bold read-only spanning below */}
-              <div className="py-0.5">
+              {/* Base pay - label | read-only input */}
+              <div className="grid grid-cols-[50px_1fr] gap-2 items-center py-0.5">
+                <Label className="text-[12px] font-bold text-black">AMOUNT</Label>
                 <Input
-                  className="h-8 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 w-full border-[#E5E7EB]"
+                  className="h-8 bg-white font-black text-right tabular-nums text-black px-2 w-full border-[#E5E7EB]"
                   value={basePay}
+                  readOnly
+                />
+              </div>
+
+              {/* 5 Days Incentive and Total - above OT rows */}
+              <div className="grid grid-cols-[110px_1fr_70px_100px] gap-2 items-center">
+                <Label className="text-[11px] font-bold text-[#1C2B33]">5 Days Incentive</Label>
+                <div />
+                <Input
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-muted/20"
+                  value={incentiveRate}
+                  readOnly
+                />
+                <Input
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  value={incentiveAmount}
+                  readOnly
+                />
+              </div>
+              <div className="grid grid-cols-[50px_1fr] gap-2 items-center pt-1 mt-1">
+                <Label className="text-[11px] font-black text-black uppercase tracking-wide">Total</Label>
+                <Input
+                  className="h-7 text-xs bg-white font-black text-black px-2 text-right tabular-nums border-[#E5E7EB]"
+                  value={formatNumber(parseInput(basePay) + parseInput(incentiveAmount))}
                   readOnly
                 />
               </div>
@@ -636,7 +742,7 @@ export function PayrollEntry() {
                 />
                 <Input
                   className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
-                  value={otRegDayAmount}
+                  value={otRegDayHours ? otRegDayAmount : ''}
                   readOnly
                 />
               </div>
@@ -650,7 +756,7 @@ export function PayrollEntry() {
                 />
                 <Input
                   className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
-                  value={otSundayAmount}
+                  value={otSundayHours ? otSundayAmount : ''}
                   readOnly
                 />
               </div>
@@ -664,7 +770,7 @@ export function PayrollEntry() {
                 />
                 <Input
                   className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
-                  value={otSpecialAmount}
+                  value={otSpecialHours ? otSpecialAmount : ''}
                   readOnly
                 />
               </div>
@@ -678,7 +784,7 @@ export function PayrollEntry() {
                 />
                 <Input
                   className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
-                  value={otLegalAmount}
+                  value={otLegalHours ? otLegalAmount : ''}
                   readOnly
                 />
               </div>
@@ -692,7 +798,7 @@ export function PayrollEntry() {
                 />
                 <Input
                   className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
-                  value={otNdAmount}
+                  value={otNdHours ? otNdAmount : ''}
                   readOnly
                 />
               </div>
@@ -772,24 +878,63 @@ export function PayrollEntry() {
                   />
                 </div>
               </div>
-
-              {/* Allowance - label | editable input | read-only display */}
-              <div className="grid grid-cols-[70px_1fr_70px_100px] gap-2 items-center">
-                <Label className="text-[11px] font-bold text-[#1C2B33]">Allowance</Label>
+              {/* Additional Allowance Fields */}
+              <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
+                <Label className="text-[11px] font-bold text-[#1C2B33]">Cash/Gas Allowance</Label>
                 <div />
                 <Input
                   className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
-                  value={allowance}
-                  onChange={(e) => setAllowance(e.target.value)}
+                  value={cashGasAllowance}
+                  onChange={(e) => setCashGasAllowance(e.target.value)}
                 />
+              </div>
+              <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
+                <Label className="text-[11px] font-bold text-[#1C2B33]">Food Allowance</Label>
+                <div />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
-                  value={allowanceDisplay}
-                  readOnly
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  value={foodAllowanceIncome}
+                  onChange={(e) => setFoodAllowanceIncome(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
+                <Label className="text-[11px] font-bold text-[#1C2B33]">Load Allowance</Label>
+                <div />
+                <Input
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  value={loadAllowance}
+                  onChange={(e) => setLoadAllowance(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
+                <Label className="text-[11px] font-bold text-[#1C2B33]">Incentives</Label>
+                <div />
+                <Input
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  value={incentivesIncome}
+                  onChange={(e) => setIncentivesIncome(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
+                <Label className="text-[11px] font-bold text-[#1C2B33]">COMMS</Label>
+                <div />
+                <Input
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  value={commsIncome}
+                  onChange={(e) => setCommsIncome(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
+                <Label className="text-[11px] font-bold text-[#1C2B33]">OT Refund</Label>
+                <div />
+                <Input
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  value={otRefund}
+                  onChange={(e) => setOtRefund(e.target.value)}
                 />
               </div>
 
-              {/* O/U Pay - label | editable input */}
+
               <div className="grid grid-cols-[70px_1fr_100px] gap-2 items-center">
                 <Label className="text-[11px] font-bold text-[#1C2B33]">O/U Pay</Label>
                 <div />
@@ -801,7 +946,7 @@ export function PayrollEntry() {
               </div>
 
               { }
-              <div className="flex gap-2 items-center pt-1 border-t border-[#E5E7EB] mt-2">
+              <div className="flex gap-2 items-center pt-1 border-[#E5E7EB] mt-2">
                 <Label className="text-[10px] font-black text-[#1C2B33] uppercase tracking-widest shrink-0">Gross Income</Label>
                 <Button
                   className="h-8 w-12 shrink-0 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none rounded-md text-[10px] font-black"
@@ -817,7 +962,7 @@ export function PayrollEntry() {
                   EXE
                 </Button>
                 <Input
-                  className="h-9 flex-1 bg-white text-[#1C2B33] font-black text-right tabular-nums text-lg px-2 border-[#0082FB]/20 shadow-inner"
+                  className="h-9 flex-1 bg-white text-[#1C2B33] font-black text-right tabular-nums text-lg px-2 border-[#E5E7EB]"
                   value={totalIncome}
                   readOnly
                 />
@@ -830,87 +975,91 @@ export function PayrollEntry() {
             <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
               Deductions
             </div>
-            <div className="p-2 space-y-1">
-              <div className="grid grid-cols-[1fr_120px_120px] gap-1 items-center">
+            <div className="p-2 space-y-2">
+              <div className="grid grid-cols-[1fr_120px_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-[#1C2B33]">Absent (Days)</Label>
                 <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={absentDays} onChange={(e) => setAbsentDays(e.target.value)} />
-                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-[#E5E7EB]" value={absentAmount} readOnly />
+                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-[#E5E7EB]" value={absentAmount} onChange={(e) => setAbsentAmount(e.target.value)} />
               </div>
-              <div className="grid grid-cols-[1fr_120px_120px] gap-1 items-center">
+              <div className="grid grid-cols-[1fr_120px_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Late (Minutes)</Label>
                 <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={lateMinutes} onChange={(e) => setLateMinutes(e.target.value)} />
-                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-[#E5E7EB]" value={lateAmount} readOnly />
+                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-[#E5E7EB]" value={lateAmount} onChange={(e) => setLateAmount(e.target.value)} />
               </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">Comms</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={comms} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">MPL(Pag-ibig Loan)</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={mpl} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">HDMF Loan(Pag-ibig Loan)</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={hdmfLoan} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">SSS Loan</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={sssLoan} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-black text-black">El Bonita Loan</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={elBonitaLoan} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">Cash Advance(CA)</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={cashAdvance} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">EGG/CAR</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={storeAcct} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">Uniform</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={uniform} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">Safety shoes</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={safetyShoes} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">Food Allowance</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={foodAllowance} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-black text-black">Pag-Ibig/Philhealth</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={pagIbigPhilhealth} readOnly />
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={pagIbigPhilhealth} onChange={(e) => setPagIbigPhilhealth(e.target.value)} />
               </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">MPL(Pag-ibig Loan)</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={mpl} onChange={(e) => setMpl(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">CP Office Loan</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={cpLoan} onChange={(e) => setCpLoan(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-black text-black">El Bonita Loan</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={elBonitaLoan} onChange={(e) => setElBonitaLoan(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">HDMF Loan(Pag-ibig Loan)</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={hdmfLoan} onChange={(e) => setHdmfLoan(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">SSS Loan</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={sssLoan} onChange={(e) => setSssLoan(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">SSS Penalty Johndorf</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={sssPenaltyJohndorf} onChange={(e) => setSssPenaltyJohndorf(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">Cash Advance(CA)</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={cashAdvance} onChange={(e) => setCashAdvance(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">EGG/CAR</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={storeAcct} onChange={(e) => setStoreAcct(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">Uniform P.O</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={uniform} onChange={(e) => setUniform(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">CHX</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={chx} onChange={(e) => setChx(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">Flag X Uniform/Jersey</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={flagXUniform} onChange={(e) => setFlagXUniform(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">Safety shoes</Label>
+                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={safetyShoes} onChange={(e) => setSafetyShoes(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Rice CA</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={riceCa} readOnly />
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={riceCa} onChange={(e) => setRiceCa(e.target.value)} />
               </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Rice</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={rice} readOnly />
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={rice} onChange={(e) => setRice(e.target.value)} />
               </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">CP Loan</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={cpLoan} readOnly />
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-bold text-black">Thailand (C.A)</Label>
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={thailandCA} onChange={(e) => setThailandCA(e.target.value)} />
               </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
-                <Label className="text-xs font-bold text-black">SSS Penalty</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={sssPenalty} readOnly />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-1 items-center">
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Motor URC</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={motorUrc} readOnly />
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={motorUrc} onChange={(e) => setMotorUrc(e.target.value)} />
               </div>
 
-              <div className="flex gap-2 items-center pt-1 border-t border-[#E5E7EB] mt-2">
+              <div className="flex gap-2 items-center pt-1 border-[#E5E7EB] mt-2">
                 <Label className="text-[10px] font-black text-black uppercase tracking-widest shrink-0">Total Deduction</Label>
                 <div className="flex flex-1 gap-1 items-center">
                   <Button className="h-8 w-12 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none text-[10px] font-black" onClick={() => { recalcAbsent(); recalcLate(); recalcTotalDeduction(); }}>EXE</Button>
-                  <Input className="h-8 flex-1 bg-white text-black font-black text-right tabular-nums text-lg px-2 border-[#E5E7EB] shadow-inner" value={totalDeduction} readOnly />
+                  <Input className="h-8 flex-1 bg-white text-black font-black text-right tabular-nums text-lg px-2 border-[#E5E7EB]" value={totalDeduction} readOnly />
                 </div>
               </div>
 
@@ -924,7 +1073,7 @@ export function PayrollEntry() {
               <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
                 Employee Contributions
               </div>
-              <div className="p-2 space-y-1">
+              <div className="p-2 space-y-2">
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">SSS</Label>
                   <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={sssEmp} readOnly />
@@ -954,7 +1103,7 @@ export function PayrollEntry() {
               <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
                 Employer Contributions
               </div>
-              <div className="p-2 space-y-1">
+              <div className="p-2 space-y-2">
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">SSS</Label>
                   <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={sssEmployer} readOnly />
@@ -974,7 +1123,7 @@ export function PayrollEntry() {
               <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
                 Overtime Rates Per Hour
               </div>
-              <div className="p-2 space-y-1">
+              <div className="p-2 space-y-2">
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
                   <Label className="text-[11px] font-bold text-[#1C2B33]">OTRegDay</Label>
                   <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otRegDayAmount} readOnly />
@@ -1028,8 +1177,8 @@ export function PayrollEntry() {
           {/* Right side: Net Income display */}
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-black text-[#1C2B33] lg:tracking-[0.2em] uppercase">Net Income</span>
-            <div className="border border-[#0082FB]/20 rounded-lg px-6 py-2 min-w-[200px] flex items-center justify-center bg-[#0082FB]/5 shadow-inner">
-              <span className="text-3xl leading-none font-black tracking-tighter tabular-nums text-[#0082FB]">
+            <div className="border border-black rounded-lg px-6 py-2 min-w-[200px] flex items-center justify-center bg-white">
+              <span className="text-3xl leading-none font-black tracking-tighter tabular-nums text-red-500">
                 {netPay}
               </span>
             </div>
