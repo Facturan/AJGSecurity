@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Moon, Sun, Monitor, SlidersHorizontal, Info, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { Moon, Sun, Monitor, SlidersHorizontal, Info, Settings as SettingsIcon } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Label } from './ui/label';
@@ -22,30 +22,12 @@ export function Settings() {
     });
   }, []);
 
-  const handleLogout = () => {
-    // Navigate to login page
-    navigate('/login');
-  };
+
 
   return (
     <div className="space-y-6">
 
-      {/* Account */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <LogOut className="w-5 h-5 text-destructive" />
-            <CardTitle className="text-destructive">Account</CardTitle>
-          </div>
-          <CardDescription>Manage your account session.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="destructive" onClick={handleLogout} className="w-full sm:w-auto">
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
-        </CardContent>
-      </Card>
+
 
       {/* Theme */}
       <Card>
@@ -119,7 +101,7 @@ export function Settings() {
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Version</p>
-              <p className="text-sm font-semibold">2.1.7</p>
+              <p className="text-sm font-semibold">Beta 0.0.0.342385472432</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">Developer</p>

@@ -33,6 +33,7 @@ type MasterDataContextType = {
   addFirearmKind: (name: string) => Promise<void>;
   addFirearmLicense: (name: string) => Promise<void>;
   addLoanType: (data: { loanId: string; loanType: string }) => Promise<void>;
+  updateLoanType: (data: { loanId: string; loanType: string }) => Promise<void>;
   deleteLoanType: (loanId: string) => Promise<void>;
   updateOvertimeRates: (rates: { RateOTRegDay: number; RateOTSunday: number; RateOTSpecial: number; RateOTLegal: number; RateOTNDBase: number; RateOTNDAdd: number; }) => Promise<boolean | void>;
 };
@@ -256,6 +257,18 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
       throw error;
     }
   };
+
+  const updateLoanType = async (data: { loanId: string; loanType: string }) => {
+    try {
+      const { error } = await supabase.from('LOAN_TYPES').update({ loanType: data.loanType }).eq('loanId', data.loanId);
+      if (error) throw error;
+      setLoanTypes(prev => prev.map(lt => lt.loanId === data.loanId ? data : lt));
+      toast.success('Loan type updated');
+    } catch (error: any) {
+      toast.error('Failed to update loan type: ' + error.message);
+      throw error;
+    }
+  };
  
   const deleteLoanType = async (loanId: string) => {
     try {
@@ -321,6 +334,7 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
     addFirearmKind,
     addFirearmLicense,
     addLoanType,
+    updateLoanType,
     deleteLoanType,
     updateOvertimeRates,
   };

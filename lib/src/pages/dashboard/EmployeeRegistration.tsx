@@ -379,16 +379,7 @@ export function EmployeeRegistration() {
       subtitle: 'Employee Management',
       icon: UserPlus,
       showSearch: false,
-      showPrimaryAction: !isViewOnly,
-      primaryActionLabel: isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'UPDATE RECORD' : 'SAVE EMPLOYEE'),
-      onPrimaryAction: () => {
-        console.log('Header Primary Action Triggered');
-        handleSubmit(onSubmit, (validationErrors) => {
-          console.error('Form Validation Errors:', validationErrors);
-          setErrorMessage('Please fill in all required fields marked with *');
-          setIsErrorOpen(true);
-        })();
-      },
+      showPrimaryAction: false,
       isLoading: isSubmitting
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -401,6 +392,23 @@ export function EmployeeRegistration() {
         setErrorMessage('Please fill in all required fields marked with *');
         setIsErrorOpen(true);
       })} className="space-y-6">
+        <div className="flex items-center justify-end mb-8">
+          {!isViewOnly && (
+            <motion.button
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={isSubmitting}
+              className={cn(
+                "h-12 px-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black rounded-full shadow-lg shadow-blue-500/30 flex items-center gap-2 border-none transition-all hover:from-blue-700 hover:to-indigo-700",
+                isSubmitting && "opacity-70 cursor-not-allowed"
+              )}
+            >
+              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save size={18} strokeWidth={3} />}
+              <span>{isEditing ? 'UPDATE RECORD' : 'SAVE EMPLOYEE'}</span>
+            </motion.button>
+          )}
+        </div>
         {isViewOnly && (
           <div className="bg-blue-500/10 border border-blue-500/20 text-blue-500 px-4 py-3 rounded-lg flex items-center gap-4 mb-4">
             <div className="flex items-center gap-2">
@@ -428,6 +436,7 @@ export function EmployeeRegistration() {
               <CardHeader>
                 <CardTitle>Employee Details</CardTitle>
                 <CardDescription>Personal information and identification</CardDescription>
+
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

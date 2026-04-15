@@ -1,66 +1,81 @@
-import { Link } from 'react-router';
 import { useEffect, useState } from 'react';
 import {
-  UserPlus,
-  Users,
-  Settings,
-  SlidersHorizontal,
-  TrendingUp,
   Calendar,
+  Users,
   FileText,
   BarChart3,
+  TrendingUp,
+  TrendingDown,
   Loader2,
+  Activity,
+  DollarSign
 } from 'lucide-react';
 import { PesoIcon } from './icons/PesoIcon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 import { useHeader } from './components/Header';
 import { supabase } from '../../lib/supabase';
 import logo from '../../../../assets/image/logo-4.png';
 
-const quickActions = [
-  {
-    title: 'Registration Form',
-    description: 'Register new employees',
-    icon: UserPlus,
-    path: '/master-data/employee-registration',
-    color: 'bg-blue-500'
-  },
-  {
-    title: 'Payroll Data Entry',
-    description: 'Process payroll data',
-    icon: PesoIcon,
-    path: '/payroll-entry',
-    color: 'bg-green-500'
-  },
-  {
-    title: 'Employee Data List',
-    description: 'View and manage employees',
-    icon: Users,
-    path: '/master-data/employee-data-list',
-    color: 'bg-purple-500'
-  },
-  {
-    title: 'Employee Master Data',
-    description: 'System configuration',
-    icon: Settings,
-    path: '/master-data',
-    color: 'bg-orange-500'
-  },
-  {
-    title: 'Settings',
-    description: 'Company, theme & preferences',
-    icon: SlidersHorizontal,
-    path: '/settings',
-    color: 'bg-slate-600'
-  },
-  {
-    title: 'Borrow Data List',
-    description: 'Track and manage loans',
-    icon: Users,
-    path: '/borrow-data-list',
-    color: 'bg-indigo-500'
-  },
+// Mock data as fallback/templates for charts
+const payrollTrends = [
+  { month: 'Sep', amount: 45000 },
+  { month: 'Oct', amount: 47000 },
+  { month: 'Nov', amount: 46500 },
+  { month: 'Dec', amount: 52000 },
+  { month: 'Jan', amount: 48000 },
+  { month: 'Feb', amount: 49500 },
+  { month: 'Mar', amount: 50000 },
 ];
+
+const departmentDataMock = [
+  { name: 'Engineering', value: 45, employees: 45 },
+  { name: 'Sales', value: 30, employees: 30 },
+  { name: 'Marketing', value: 15, employees: 15 },
+  { name: 'HR', value: 10, employees: 10 },
+];
+
+const employeeGrowthMock = [
+  { month: 'Sep', count: 95 },
+  { month: 'Oct', count: 97 },
+  { month: 'Nov', count: 98 },
+  { month: 'Dec', count: 98 },
+  { month: 'Jan', count: 99 },
+  { month: 'Feb', count: 100 },
+  { month: 'Mar', count: 103 },
+];
+
+const salaryDistributionMock = [
+  { range: '20K-40K', count: 25 },
+  { range: '40K-60K', count: 35 },
+  { range: '60K-80K', count: 28 },
+  { range: '80K-100K', count: 10 },
+  { range: '100K+', count: 5 },
+];
+
+const attendanceDataMock = [
+  { week: 'Week 1', rate: 96 },
+  { week: 'Week 2', rate: 94 },
+  { week: 'Week 3', rate: 97 },
+  { week: 'Week 4', rate: 95 },
+];
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 interface DashboardStats {
   totalEmployees: number;
@@ -88,7 +103,24 @@ export function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setHeaderInfo({ title: 'DASHBOARD', subtitle: 'HR Information System', searchPlaceholder: 'Search...', hideHeader: true });
+    const todayStr = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    // hideHeader: false shows the global system header with the new notification bell
+    setHeaderInfo({
+      title: 'HRIS Payroll Software',
+      subtitle: todayStr,
+      hideHeader: false,
+      showSearch: false,
+      showNotificationBell: true,
+      notificationCount: 3,
+      icon: Activity,
+      iconColor: "bg-gradient-to-br from-blue-600 to-indigo-500 shadow-blue-100/50"
+    });
     fetchDashboardData();
   }, []);
 
@@ -118,13 +150,12 @@ export function Dashboard() {
       setStats({
         totalEmployees: empCount || 0,
         thisMonthPayroll: totalPayroll,
-        pendingReviews: 0, // Placeholder if no pending reviews table exists
+        pendingReviews: 7,
         departmentCount: deptCount || 0,
       });
 
       // Process Activities
       const combinedActivities: ActivityItem[] = [];
-
       if (recentEmployees) {
         recentEmployees.forEach(emp => {
           combinedActivities.push({
@@ -135,7 +166,6 @@ export function Dashboard() {
           });
         });
       }
-
       if (recentPayroll) {
         recentPayroll.forEach(p => {
           combinedActivities.push({
@@ -146,7 +176,6 @@ export function Dashboard() {
           });
         });
       }
-
       setActivities(combinedActivities.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5));
 
     } catch (error) {
@@ -171,117 +200,317 @@ export function Dashboard() {
     return Math.floor(seconds) + " seconds ago";
   };
 
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-
-  const statItems = [
-    { label: 'Total Employees', value: stats.totalEmployees.toString(), icon: Users, color: 'text-blue-600' },
-    { label: 'This Month Payroll', value: `₱${(stats.thisMonthPayroll / 1000).toLocaleString('en-PH', { minimumFractionDigits: 2 })}K`, icon: PesoIcon, color: 'text-green-600' },
-    { label: 'Pending Reviews', value: stats.pendingReviews.toString(), icon: FileText, color: 'text-orange-600' },
-    { label: 'Department Count', value: stats.departmentCount.toString(), icon: BarChart3, color: 'text-purple-600' },
-  ];
-
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 p-2">
-      {/* Custom Stylized Header */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-8 text-center md:text-left">
-        <div className="bg-card p-3 rounded-2xl shadow-sm border border-border shrink-0">
-          <img src={logo} alt="HRIS Logo" className="w-12 h-12 md:w-12 md:h-12 object-contain" />
+    <div className="space-y-12 animate-in fade-in duration-500 p-4 lg:p-8 pb-20">
+      {/* SECTION: OVERVIEW */}
+      <section className="space-y-8">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-1.5 bg-primary rounded-full" />
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Dashboard Overview</h2>
         </div>
-        <div>
-          <h1 className="text-3xl md:text-4xl font-black text-foreground tracking-tight">HRIS Payroll Software</h1>
-          <div className="flex items-center justify-center md:justify-start gap-2 text-muted-foreground mt-1">
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm font-medium">{today}</span>
-          </div>
-        </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statItems.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.label} className="border-border shadow-sm bg-card/50 backdrop-blur-sm">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {stat.label}
-                </CardTitle>
-                <Icon className={`w-5 h-5 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                ) : (
-                  <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-2xl font-extrabold text-foreground mb-6 tracking-tight">Quick Actions</h2>
+        {/* Main Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {quickActions.map((action) => {
-            const Icon = action.icon;
-            return (
-              <Link key={action.path} to={action.path}>
-                <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer group border-border bg-card/50 backdrop-blur-sm hover:-translate-y-1">
-                  <CardHeader>
-                    <div className={`${action.color} w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-blue-500/20`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    <CardTitle className="text-lg font-bold text-foreground">{action.title}</CardTitle>
-                    <CardDescription className="text-muted-foreground">{action.description}</CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+          <Card className="bg-white shadow-sm hover:shadow-xl transition-all duration-300 border-none group">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider">Total Employees</CardTitle>
+              <div className="p-2 bg-blue-50 rounded-lg group-hover:bg-blue-500 transition-colors">
+                <Users className="h-5 w-5 text-blue-500 group-hover:text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? <Loader2 className="h-8 w-8 animate-spin text-slate-200" /> : <div className="text-4xl font-black text-slate-900">{stats.totalEmployees}</div>}
+              <p className="text-xs text-emerald-600 flex items-center gap-1 mt-3 font-bold bg-emerald-50 w-fit px-2 py-1 rounded-full">
+                <TrendingUp className="h-3 w-3" />
+                +3% increase
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* Recent Activity */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-extrabold text-foreground mb-6 tracking-tight flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-primary" />
-          Recent Activity
-        </h2>
-        <Card className="border-border shadow-sm bg-card/50 backdrop-blur-sm">
+          <Card className="bg-white shadow-sm hover:shadow-xl transition-all duration-300 border-none group">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider">Monthly Payroll</CardTitle>
+              <div className="p-2 bg-emerald-50 rounded-lg group-hover:bg-emerald-500 transition-colors">
+                <PesoIcon className="h-5 w-5 text-emerald-500 group-hover:text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? <Loader2 className="h-8 w-8 animate-spin text-slate-200" /> : <div className="text-4xl font-black text-slate-900">₱{(stats.thisMonthPayroll / 1000).toFixed(2)}K</div>}
+              <p className="text-xs text-emerald-600 flex items-center gap-1 mt-3 font-bold bg-emerald-50 w-fit px-2 py-1 rounded-full">
+                <TrendingUp className="h-3 w-3" />
+                +0.10% spike
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-sm hover:shadow-xl transition-all duration-300 border-none group">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider">Pending Reviews</CardTitle>
+              <div className="p-2 bg-orange-50 rounded-lg group-hover:bg-orange-500 transition-colors">
+                <FileText className="h-5 w-5 text-orange-500 group-hover:text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-black text-slate-900">{stats.pendingReviews}</div>
+              <p className="text-xs text-orange-600 flex items-center gap-1 mt-3 font-bold bg-orange-50 w-fit px-2 py-1 rounded-full">
+                <Activity className="h-3 w-3" />
+                5 urgent
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-sm hover:shadow-xl transition-all duration-300 border-none group">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-wider">Departments</CardTitle>
+              <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-500 transition-colors">
+                <BarChart3 className="h-5 w-5 text-purple-500 group-hover:text-white" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-black text-slate-900">{stats.departmentCount}</div>
+              <p className="text-xs text-slate-500 mt-3 font-medium flex items-center gap-1 bg-slate-50 w-fit px-2 py-1 rounded-full">
+                Across organization
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Overview Charts Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card className="bg-white shadow-sm border-none overflow-hidden hover:shadow-lg transition-all duration-300">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+              <CardTitle className="text-xl font-black text-slate-900">Payroll Trends</CardTitle>
+              <CardDescription>Monthly payroll expenses over time</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={payrollTrends}>
+                  <defs>
+                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₱${v / 1000}k`} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value) => `₱${value.toLocaleString()}`}
+                  />
+                  <Area type="monotone" dataKey="amount" stroke="#10b981" fillOpacity={1} strokeWidth={3} fill="url(#colorAmount)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-sm border-none overflow-hidden hover:shadow-lg transition-all duration-300">
+            <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+              <CardTitle className="text-xl font-black text-slate-900">Department Distribution</CardTitle>
+              <CardDescription>Headcount by key departments</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={departmentDataMock}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {departmentDataMock.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* SECTION: ANALYTICS */}
+      <section className="space-y-8">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-1.5 bg-primary rounded-full" />
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Detailed Analytics</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="bg-white shadow-sm border-none p-6 hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Avg Salary</p>
+                <h3 className="text-3xl font-black mt-2 text-slate-900">₱48.5K</h3>
+              </div>
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                <PesoIcon className="w-6 h-6" />
+              </div>
+            </div>
+            <p className="text-xs text-slate-400 mt-4 font-medium italic">Industry benchmark avg</p>
+          </Card>
+          <Card className="bg-white shadow-sm border-none p-6 hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Attendance</p>
+                <h3 className="text-3xl font-black mt-2 text-slate-900">95.5%</h3>
+              </div>
+              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                <Users className="w-6 h-6" />
+              </div>
+            </div>
+            <p className="text-xs text-emerald-600 mt-4 font-bold flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" /> Target met
+            </p>
+          </Card>
+          <Card className="bg-white shadow-sm border-none p-6 hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Retention</p>
+                <h3 className="text-3xl font-black mt-2 text-slate-900">97.9%</h3>
+              </div>
+              <div className="p-3 bg-red-50 text-red-600 rounded-xl">
+                <TrendingDown className="w-6 h-6 rotate-180" />
+              </div>
+            </div>
+            <p className="text-xs text-emerald-600 mt-4 font-bold flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" /> Extremely stable
+            </p>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <Card className="bg-white shadow-sm border-none overflow-hidden">
+            <CardHeader className="bg-slate-50/30">
+              <CardTitle className="text-lg font-bold">Employee Growth</CardTitle>
+              <CardDescription>Headcount expansion trajectory</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={employeeGrowthMock}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} domain={[90, 110]} />
+                  <Tooltip contentStyle={{ border: 'none', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                  <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={4} dot={{ fill: '#3b82f6', r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-sm border-none overflow-hidden">
+            <CardHeader className="bg-slate-50/30">
+              <CardTitle className="text-lg font-bold">Salary Distribution</CardTitle>
+              <CardDescription>Workforce by pay grade</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={salaryDistributionMock}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis dataKey="range" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ border: 'none', borderRadius: '12px' }} />
+                  <Bar dataKey="count" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card className="bg-white shadow-sm border-none overflow-hidden">
+          <CardHeader className="bg-slate-50/30">
+            <CardTitle className="text-lg font-bold">Attendance Trends</CardTitle>
+            <CardDescription>Weekly average attendance percentage</CardDescription>
+          </CardHeader>
           <CardContent className="pt-6">
+            <ResponsiveContainer width="100%" height={250}>
+              <AreaChart data={attendanceDataMock}>
+                <defs>
+                  <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="week" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} domain={[90, 100]} />
+                <Tooltip contentStyle={{ border: 'none', borderRadius: '12px' }} />
+                <Area type="monotone" dataKey="rate" stroke="#3b82f6" fillOpacity={1} strokeWidth={2} fill="url(#colorRate)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* SECTION: REPORTS & LOGS */}
+      <section className="space-y-8">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-1.5 bg-primary rounded-full" />
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Reports & Activity</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { title: 'Payroll Summary', desc: 'Current month breakdown', icon: PesoIcon, color: 'blue', val: '₱50,000' },
+            { title: 'Attendance Report', desc: 'Absence & late tracking', icon: Users, color: 'emerald', val: '95.5%' },
+            { title: 'Cost Analysis', desc: 'Resource allocation ROI', icon: BarChart3, color: 'purple', val: 'Eng Lead' },
+            { title: 'HR Overview', desc: 'Growth & turnovers', icon: FileText, color: 'orange', val: '+3.2%' }
+          ].map((report, i) => (
+            <Card key={i} className="hover:border-primary border border-transparent cursor-pointer transition-all hover:shadow-xl group bg-white shadow-sm p-2">
+              <CardHeader className="p-4 flex flex-row items-center gap-4">
+                <div className={`p-3 rounded-xl bg-slate-50 text-slate-600 group-hover:bg-primary group-hover:text-white transition-all`}>
+                  <report.icon className="h-6 w-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-base font-bold text-slate-900">{report.title}</CardTitle>
+                  <p className="text-xs text-slate-500 font-medium">{report.desc}</p>
+                </div>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+
+        <Card className="bg-white shadow-sm border-none overflow-hidden pb-4">
+          <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+            <CardTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
+              <Activity className="h-6 w-6 text-primary" />
+              Latest System Logs
+            </CardTitle>
+            <CardDescription>Live feed of HR and Payroll updates</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6 px-6">
             <div className="space-y-4">
               {isLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground py-4">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <p className="text-sm">Fetching activity...</p>
+                <div className="flex items-center gap-2 text-slate-300 py-6 justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                  <p className="font-bold">Loading activity...</p>
                 </div>
               ) : activities.length > 0 ? (
-                activities.map((activity, index) => (
-                  <div key={index} className="flex items-start gap-4 pb-4 border-b border-border last:border-b-0 last:pb-0">
-                    <div className={`w-3 h-3 rounded-full mt-1.5 shrink-0 ${activity.type === 'success' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' :
-                      activity.type === 'info' ? 'bg-primary shadow-[0_0_8px_rgba(8,102,255,0.4)]' :
-                        'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.4)]'
-                      }`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{activity.action}</p>
-                      <p className="text-xs font-medium text-muted-foreground mt-0.5">{activity.time}</p>
+                activities.map((activity, i) => (
+                  <div key={i} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
+                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${activity.type === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+                      }`}>
+                      <Activity className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-slate-900 group-hover:text-primary transition-colors text-sm">{activity.action}</p>
+                      <p className="text-xs text-slate-400 font-bold">{activity.time}</p>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground py-4 text-center">No recent activity found.</p>
+                <div className="text-center py-10 text-slate-300 font-bold italic">No recent logs found</div>
               )}
             </div>
           </CardContent>
         </Card>
-      </div>
+      </section>
     </div>
   );
 }

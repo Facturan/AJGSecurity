@@ -6,14 +6,16 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { useHeader } from './components/Header';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Save, UploadCloud, ImagePlus, X, Building2, Users } from 'lucide-react';
+import { Loader2, Save, UploadCloud, ImagePlus, X, Building2, Users, FileText } from 'lucide-react';
 import { CustomerList } from './CustomerList';
+import { Endorsement } from './Endorsement';
 
 export function Company() {
     const { setHeaderInfo } = useHeader();
     const location = useLocation();
     const isCustomerList = location.pathname.includes('/customer-list');
     const isCustomerForm = location.pathname.includes('/customer') && !isCustomerList;
+    const isEndorsement = location.pathname.includes('/endorsement');
 
     // --- Company State ---
     const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +42,7 @@ export function Company() {
     });
 
     useEffect(() => {
-        if (isCustomerList) return; // CustomerList component handles its own header
+        if (isCustomerList || isEndorsement) return; // CustomerList and Endorsement component handles its own header
 
         setHeaderInfo({
             title: isCustomerForm ? 'CUSTOMER' : 'COMPANY',
@@ -49,7 +51,7 @@ export function Company() {
             searchPlaceholder: 'Search...',
             showSearch: false
         });
-    }, [isCustomerForm, isCustomerList, setHeaderInfo]);
+    }, [isCustomerForm, isCustomerList, isEndorsement, setHeaderInfo]);
 
     // Fetch initial data
     useEffect(() => {
@@ -164,6 +166,8 @@ export function Company() {
         <div key={location.pathname} className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
             {isCustomerList ? (
                 <CustomerList />
+            ) : isEndorsement ? (
+                <Endorsement />
             ) : isCustomerForm ? (
                 <Card className="border-border">
                     <CardHeader className="pb-3 border-b border-border">

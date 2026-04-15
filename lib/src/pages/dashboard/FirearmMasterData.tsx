@@ -152,88 +152,74 @@ export function FirearmMasterData() {
             showSearch: activeFirearmTab === 'License',
             onSearch: activeFirearmTab === 'License' ? setSearchTerm : undefined,
             searchPlaceholder: 'Search by SN, make, or model...',
+            showNotificationBell: activeFirearmTab === 'License',
+            notificationCount: notifications.length,
+            onNotificationClick: () => setNotifOpen(!notifOpen),
             leftActions: undefined,
-            customActions: activeFirearmTab === 'License' ? (
-                <>
-                    <div className="relative shrink mr-2" ref={notifRef}>
-                        <button
-                            onClick={() => setNotifOpen(!notifOpen)}
-                            className={cn(
-                                "relative w-9 h-9 rounded-xl border border-border/50 flex items-center justify-center transition-all",
-                                notifOpen ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                            )}
-                        >
-                            <Bell size={18} />
-                            {notifications.length > 0 && (
-                                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 ring-2 ring-background animate-pulse" />
-                            )}
-                        </button>
-
-                        <AnimatePresence>
-                            {notifOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                    transition={{ duration: 0.2, ease: "easeOut" }}
-                                    className="absolute top-full right-0 mt-3 w-80 bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden"
-                                >
-                                    <div className="p-4 border-b border-border bg-muted/30">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-bold text-foreground">License Notifications</h3>
-                                            <span className="text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                                {notifications.length} Alerts
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="max-h-[360px] overflow-y-auto p-2 space-y-2 scrollbar-hide">
-                                        {notifications.length > 0 ? (
-                                            notifications.map((record, idx) => (
-                                                <div key={idx} className="p-3 rounded-xl border border-border/50 bg-background/50 hover:bg-muted/30 transition-colors group">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
-                                                            <AlertTriangle size={14} className="text-amber-500" />
-                                                        </div>
-                                                        <div className="flex flex-col min-w-0">
-                                                            <span className="text-xs font-bold text-foreground truncate">{record.make} {record.model}</span>
-                                                            <span className="text-[10px] text-muted-foreground font-medium">SN: {record.serialNo}</span>
-                                                            <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold py-1 px-2 rounded-md bg-rose-500/10 text-rose-600 border border-rose-500/20 w-fit">
-                                                                <Calendar size={10} />
-                                                                Expires: {record.dateExpiry}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-                                                <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center mb-3">
-                                                    <CheckCircle2 size={24} className="text-muted-foreground/30" />
-                                                </div>
-                                                <p className="text-xs font-bold text-muted-foreground">No pending expirations</p>
-                                                <p className="text-[10px] text-muted-foreground/60 mt-1">All licenses are up to date</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="p-3 bg-muted/20 border-t border-border mt-1">
-                                        <button className="w-full py-2 text-[10px] font-bold text-primary hover:bg-primary/5 rounded-lg transition-colors uppercase tracking-widest">
-                                            View All Records
-                                        </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                    <Button onClick={() => setIsLicenseModalOpen(true)} className="h-9 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-md shadow-blue-500/20 border-none gap-2 ml-8">
-                        <Plus size={16} strokeWidth={3} /> Register Firearms
-                    </Button>
-                </>
-            ) : undefined
+            customActions: undefined
         });
     }, [activeFirearmTab, setHeaderInfo, notifOpen, notifications, notifRef]);
 
     return (
         <div className="animate-in fade-in duration-500 space-y-6">
+            {/* License Notifications Dropdown (Triggered from Global Header) */}
+            <div className="fixed top-16 right-6 z-[100]" ref={notifRef}>
+                <AnimatePresence>
+                    {notifOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden"
+                        >
+                            <div className="p-4 border-b border-border bg-muted/30">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-sm font-bold text-foreground">License Notifications</h3>
+                                    <span className="text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        {notifications.length} Alerts
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="max-h-[360px] overflow-y-auto p-2 space-y-2 scrollbar-hide">
+                                {notifications.length > 0 ? (
+                                    notifications.map((record, idx) => (
+                                        <div key={idx} className="p-3 rounded-xl border border-border/50 bg-background/50 hover:bg-muted/30 transition-colors group">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+                                                    <AlertTriangle size={14} className="text-amber-500" />
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-xs font-bold text-foreground truncate">{record.make} {record.model}</span>
+                                                    <span className="text-[10px] text-muted-foreground font-medium">SN: {record.serialNo}</span>
+                                                    <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold py-1 px-2 rounded-md bg-rose-500/10 text-rose-600 border border-rose-500/20 w-fit">
+                                                        <Calendar size={10} />
+                                                        Expires: {record.dateExpiry}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                                        <div className="w-12 h-12 rounded-full bg-muted/30 flex items-center justify-center mb-3">
+                                            <CheckCircle2 size={24} className="text-muted-foreground/30" />
+                                        </div>
+                                        <p className="text-xs font-bold text-muted-foreground">No pending expirations</p>
+                                        <p className="text-[10px] text-muted-foreground/60 mt-1">All licenses are up to date</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-3 bg-muted/20 border-t border-border mt-1">
+                                <button className="w-full py-2 text-[10px] font-bold text-primary hover:bg-primary/5 rounded-lg transition-colors uppercase tracking-widest">
+                                    View All Records
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+
             <div key={activeFirearmTab}>
                 {(() => {
                     if (activeFirearmTab === 'License') {
@@ -267,13 +253,28 @@ export function FirearmMasterData() {
                             <div className="flex flex-col gap-6 animate-in fade-in duration-300">
                                 {/* Header & Stats Section */}
                                 <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <h2 className="text-xl font-black text-slate-800 tracking-tight uppercase">License Entry</h2>
+                                            <p className="text-xs font-medium text-slate-500">Manage and monitor firearm registration records.</p>
+                                        </div>
+                                        <motion.button
+                                            whileHover={{ scale: 1.02, y: -1 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => setIsLicenseModalOpen(true)}
+                                            className="h-11 px-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2 border-none"
+                                        >
+                                            <Plus size={18} strokeWidth={3} />
+                                            <span>REGISTER FIREARMS</span>
+                                        </motion.button>
+                                    </div>
                                     <Dialog open={isLicenseModalOpen} onOpenChange={setIsLicenseModalOpen}>
                                         <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-white border-0 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] rounded-3xl">
                                             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 flex flex-col justify-center">
                                                 <DialogHeader className="p-0 border-none space-y-1">
                                                     <DialogTitle className="text-2xl font-black text-white flex items-center gap-2">
                                                         <Shield className="w-6 h-6 text-blue-200" />
-                                                        Add License
+                                                        Register Firearms
                                                     </DialogTitle>
                                                     <p className="text-blue-100 text-sm mt-1 opacity-90 font-medium">Enter the details to register a new firearm license.</p>
                                                 </DialogHeader>
@@ -389,7 +390,7 @@ export function FirearmMasterData() {
                                                         handleSaveLicense();
                                                         setIsLicenseModalOpen(false);
                                                     }} className="h-11 px-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:-translate-y-0.5 border-none">
-                                                        Save License
+                                                        Save
                                                     </Button>
                                                 </div>
                                             </div>
@@ -544,7 +545,7 @@ export function FirearmMasterData() {
                                 <CardContent className="p-8">
                                     <div className="space-y-6">
                                         <div className="space-y-2">
-                                            <Label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest ml-1">Name / Description</Label>
+                                            <Label className="text-[11px] font-extrabold text-slate-500 uppercase tracking-widest ml-1">Name</Label>
                                             <div className="flex gap-3">
                                                 <Input
                                                     placeholder={`Enter ${config.label} name...`}

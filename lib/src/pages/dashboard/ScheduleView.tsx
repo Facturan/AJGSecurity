@@ -148,26 +148,24 @@ function CategoryDropdown({
       {/* Trigger button */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 h-8 px-3 rounded-full border transition-all"
-        style={{
-          borderColor: isFiltered ? "rgba(99, 102, 241, 0.3)" : "rgba(0, 0, 0, 0.08)",
-          background: isFiltered ? "rgba(99, 102, 241, 0.05)" : "white",
-        }}
+        className={`flex items-center gap-2 h-10 px-4 rounded-full border transition-all ${isFiltered
+            ? "border-indigo-500/30 bg-indigo-50/50"
+            : "border-border/50 bg-white shadow-sm hover:bg-gray-50"
+          }`}
       >
-        {/* Active color dot when filtered/icon otherwise */}
-        <div className="flex items-center justify-center w-3.5 h-3.5 flex-shrink-0">
+        <div className="flex items-center justify-center flex-shrink-0">
           {isFiltered ? (
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
           ) : (
-            <Filter size={12} className="text-muted-foreground/50" />
+            <Filter size={14} className="text-muted-foreground/70" />
           )}
         </div>
-        <span className="text-[11px] font-semibold whitespace-nowrap"
-          style={{ color: isFiltered ? "rgb(79, 70, 229)" : "hsl(var(--foreground))" }}>
+        <span className={`text-sm font-medium whitespace-nowrap ${isFiltered ? "text-indigo-600" : "text-foreground/80"
+          }`}>
           {isFiltered ? value : "Filter"}
         </span>
         <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.18 }}>
-          <ChevronDown size={12} className="text-muted-foreground/50" />
+          <ChevronDown size={14} className="text-muted-foreground/70" />
         </motion.div>
       </button>
 
@@ -567,14 +565,7 @@ export function ScheduleView() {
   const [search, setSearch] = useState("");
   const [filterCategory, setFilterCat] = useState<string>("All");
   const [notifOpen, setNotifOpen] = useState(false);
-
   const { setHeaderInfo } = useHeader();
-
-  useEffect(() => {
-    setHeaderInfo({
-      hideHeader: true,
-    });
-  }, [setHeaderInfo]);
 
   const currentWeek = weeks[weekIndex] ?? weeks[0];
   const totalEvents = currentWeek.reduce((s, d) => s + d.events.length, 0);
@@ -597,6 +588,71 @@ export function ScheduleView() {
   const lastDay = currentWeek[4];
   const weekLabel = `${firstDay.month} ${firstDay.date} – ${lastDay.date}, 2026`;
   const isCurrentWeek = weekIndex === 0;
+
+  useEffect(() => {
+    setHeaderInfo({
+      title: 'SCHEDULE',
+      subtitle: 'Weekly Planner',
+      icon: Calendar,
+      iconColor: "rounded-full bg-[#5260ff] shadow-sm",
+      hideHeader: false,
+      showSearch: true,
+      onSearch: setSearch,
+      searchPlaceholder: 'Search...',
+      showNotificationBell: true,
+      notificationCount: currentWeek.find(d => d.isToday)?.events.length,
+      onNotificationClick: () => setNotifOpen(!notifOpen),
+
+      leftActions: (
+        <div className="flex items-center ml-2 flex-shrink-0">
+          <div className="w-px h-6 bg-border/60 mx-3" />
+
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={() => setWeekIndex((i) => Math.max(0, i - 1))}
+              disabled={weekIndex === 0}
+              className="w-8 h-8 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 hover:border-border transition-all flex-shrink-0"
+            >
+              <ChevronLeft size={14} />
+            </button>
+
+            <div className="flex flex-col items-center justify-center px-5 py-[5px] mx-0.5 rounded-[20px] border border-border/50 bg-white shadow-sm min-w-[170px] flex-shrink-0">
+              <span className="text-foreground font-bold text-[13px] leading-tight tracking-tight whitespace-nowrap">
+                {weekLabel}
+              </span>
+              <span className="text-muted-foreground/60 text-[10px] leading-tight font-medium mt-[2px] whitespace-nowrap uppercase">
+                {isCurrentWeek ? "Current Week" : `Week ${weekIndex + 1}`}
+              </span>
+            </div>
+
+            <button
+              onClick={() => setWeekIndex((i) => Math.min(weeks.length - 1, i + 1))}
+              disabled={weekIndex === weeks.length - 1}
+              className="w-8 h-8 rounded-full border border-border/50 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 hover:border-border transition-all flex-shrink-0"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      ),
+
+      customActions: (
+        <div className="flex items-center gap-2">
+          <CategoryDropdown value={filterCategory} onChange={setFilterCat} />
+        </div>
+      )
+    });
+  }, [
+    setHeaderInfo,
+    weekIndex,
+    weekLabel,
+    isCurrentWeek,
+    totalEvents,
+    totalAttendees,
+    filterCategory,
+    notifOpen,
+    currentWeek
+  ]);
 
   const handleAddEvent = (event: Omit<Event, "id">, dayName: string) => {
     const id = `e_${Date.now()}`;
@@ -621,159 +677,68 @@ export function ScheduleView() {
 
   return (
     <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50/30 to-indigo-50/40 flex flex-col overflow-hidden">
-
-      {/* ── Single unified header ─────────────────────────────────────── */}
-      <header className="bg-card border-b border-border relative flex-shrink-0">
-        {/* Decorative glows - more subtle for light mode */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-full bg-gradient-to-l from-indigo-50/50 to-transparent" />
-        </div>
-
-        <div className="relative max-w-screen-2xl mx-auto px-6 h-16 flex items-center gap-3">
-
-          {/* ── Brand ── */}
-          <div className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Calendar size={15} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-foreground tracking-widest text-sm font-bold uppercase leading-tight">Schedule</h1>
-              <p className="text-muted-foreground/60 text-[10px] leading-tight font-medium">Weekly Planner</p>
-            </div>
-          </div>
-
-          {/* ── Divider ── */}
-          <div className="w-px h-7 bg-border mx-1 flex-shrink-0" />
-
-          {/* ── Week nav pill ── */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button
-              onClick={() => setWeekIndex((i) => Math.max(0, i - 1))}
-              disabled={weekIndex === 0}
-              className="w-7 h-7 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronLeft size={13} />
-            </button>
-
-            {/* Date pill */}
-            <div className="flex flex-col items-center px-4 py-1.5 rounded-xl border border-border/50 min-w-[170px]">
-              <span className="text-foreground font-bold text-sm leading-tight tracking-tight">
-                {weekLabel}
-              </span>
-              <span className="text-muted-foreground/60 text-[10px] leading-tight mt-0.5 font-medium">
-                {isCurrentWeek ? "Current Week" : `Week ${weekIndex + 1}`}
-              </span>
-            </div>
-
-            <button
-              onClick={() => setWeekIndex((i) => Math.min(weeks.length - 1, i + 1))}
-              disabled={weekIndex === weeks.length - 1}
-              className="w-7 h-7 rounded-lg border border-border/50 flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted/30 disabled:opacity-25 disabled:cursor-not-allowed transition-all"
-            >
-              <ChevronRight size={13} />
-            </button>
-          </div>
-
-          {/* ── Divider ── */}
-          <div className="w-px h-7 bg-border mx-1 flex-shrink-0" />
-
-          {/* ── Stats ── */}
-          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/40">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span className="text-foreground/70 text-[11px] font-medium">{totalEvents} events</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/40">
-              <Users size={10} className="text-indigo-500/70" />
-              <span className="text-foreground/70 text-[11px] font-medium">{totalAttendees} attendees</span>
-            </div>
-          </div>
-
-          {/* ── Spacer ── */}
-          <div className="flex-1" />
-
-          {/* ── Search ── */}
-          <div className="relative hidden md:block flex-shrink-0">
-            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search..."
-              className="bg-black/[0.03] hover:bg-black/[0.05] rounded-full border-none pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-background transition-all w-32 lg:w-40"
-            />
-          </div>
-
-          {/* ── Category dropdown ── */}
-          <CategoryDropdown value={filterCategory} onChange={setFilterCat} />
-
-          {/* ── Bell ── */}
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={() => setNotifOpen((v) => !v)}
-              className="relative w-9 h-9 rounded-full border-none hover:bg-black/[0.05] flex items-center justify-center text-muted-foreground hover:text-foreground transition-all"
-            >
-              <Bell size={15} />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
-            </button>
-            <AnimatePresence>
-              {notifOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                  className="absolute right-0 top-11 z-50 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
-                >
-                  <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
-                    <span className="text-xs font-semibold text-gray-600">Upcoming today</span>
-                  </div>
-                  {currentWeek.find((d) => d.isToday)?.events.map((ev) => {
-                    const c = getColor(ev.color);
-                    return (
-                      <div key={ev.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.bar }} />
-                        <div>
-                          <p className="text-xs font-medium text-gray-800">{ev.title}</p>
-                          <p className="text-[10px] text-gray-400">{ev.time} · {ev.duration}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {!currentWeek.find((d) => d.isToday)?.events.length && (
-                    <div className="px-4 py-4 text-center text-xs text-gray-400">No events today</div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* ── Add Event ── */}
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => { setEditEvent(undefined); setModalOpen(true); }}
-            className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-blue-500 text-white rounded-xl px-4 py-2 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all flex-shrink-0"
+      <AnimatePresence>
+        {notifOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+            className="absolute right-6 top-16 z-50 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden"
           >
-            <Plus size={14} />
-            <span className="text-sm font-semibold">Add Event</span>
-          </motion.button>
-        </div>
-      </header>
+            <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50">
+              <span className="text-xs font-semibold text-gray-600">Upcoming today</span>
+            </div>
+            {currentWeek.find((d) => d.isToday)?.events.map((ev) => {
+              const c = getColor(ev.color);
+              return (
+                <div key={ev.id} className="px-4 py-2.5 flex items-center gap-3 hover:bg-gray-50 transition-colors">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: c.bar }} />
+                  <div>
+                    <p className="text-xs font-medium text-gray-800">{ev.title}</p>
+                    <p className="text-[10px] text-gray-400">{ev.time} · {ev.duration}</p>
+                  </div>
+                </div>
+              );
+            })}
+            {!currentWeek.find((d) => d.isToday)?.events.length && (
+              <div className="px-4 py-4 text-center text-xs text-gray-400">No events today</div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Week Grid ─────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-        <div className="max-w-screen-2xl mx-auto h-full flex flex-col lg:flex-row gap-4">
+      <main className="flex-1 flex flex-col overflow-y-auto p-4 md:p-6 lg:p-8">
+        <div className="max-w-screen-2xl mx-auto w-full mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/50 bg-white shadow-sm flex-shrink-0">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)] flex-shrink-0" />
+              <span className="text-foreground/80 text-[11px] font-medium whitespace-nowrap">{totalEvents} events</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/50 bg-white shadow-sm flex-shrink-0">
+              <Users size={12} className="text-indigo-400 flex-shrink-0" />
+              <span className="text-foreground/80 text-[11px] font-medium whitespace-nowrap">{totalAttendees} attendees</span>
+            </div>
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => { setEditEvent(undefined); setModalOpen(true); }}
+            className="flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r from-[#5260ff] to-indigo-600 text-white text-[11px] font-bold shadow-md hover:shadow-lg transition-all"
+          >
+            <Plus size={14} strokeWidth={3} />
+            <span>ADD EVENT</span>
+          </motion.button>
+        </div>
+
+        <div className="max-w-screen-2xl mx-auto h-full w-full flex flex-col lg:flex-row gap-4">
           {filteredWeek.map((day) => (
             <DayColumn key={day.name} day={day} onDelete={handleDeleteEvent} onEdit={openEdit} />
           ))}
         </div>
       </main>
 
-      {/* ── Footer ───────────────────────────────────────────────────── */}
-      <footer className="bg-white/50 border-t border-gray-100 py-2.5 text-center flex-shrink-0">
-        <p className="text-[11px] text-gray-400">
-          {totalEvents} scheduled events · {uniqueCategories.join(", ") || "No categories"}
-        </p>
-      </footer>
 
       {/* ── Modal ────────────────────────────────────────────────────── */}
       <EventModal
@@ -786,3 +751,4 @@ export function ScheduleView() {
     </div>
   );
 }
+

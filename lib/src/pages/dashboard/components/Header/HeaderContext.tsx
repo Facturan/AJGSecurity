@@ -39,6 +39,11 @@ interface HeaderInfo {
         onClick: () => void;
     }[];
 
+    // Notification Bell
+    showNotificationBell?: boolean;
+    notificationCount?: number;
+    onNotificationClick?: () => void;
+
     hideHeader?: boolean;
 }
 

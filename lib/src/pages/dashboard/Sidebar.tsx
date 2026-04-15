@@ -50,16 +50,17 @@ interface NavItem {
 
 const navItems: NavItem[] = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+    { to: '/payroll-entry', label: 'Payroll Data Entry', icon: Calculator },
     {
         label: 'Company',
         icon: Building2,
         children: [
             { to: '/company', label: 'Company', icon: Building2, end: true },
             { to: '/company/customer', label: 'Customer Form', icon: UserPlus },
+            { to: '/company/endorsement', label: 'Endorsement', icon: FileText },
             { to: '/company/customer-list', label: 'Customer List', icon: Users2 },
         ]
     },
-    { to: '/payroll-entry', label: 'Payroll Data Entry', icon: Calculator },
     {
         label: 'Loans / Deduct',
         icon: PesoIcon,
@@ -74,8 +75,8 @@ const navItems: NavItem[] = [
         label: 'Employee Master Data',
         icon: Database,
         children: [
-            { to: '/master-data/employee-data-list', label: 'Employee Data List', icon: Users },
             { to: '/master-data/employee-registration', label: 'Employee Registration', icon: UserPlus },
+            { to: '/master-data/employee-data-list', label: 'Employee Data List', icon: Users },
             { to: '/master-data/position', label: 'Setup Position', icon: Briefcase },
             { to: '/master-data/department', label: 'Setup Department', icon: Users2 },
             { to: '/master-data/religion', label: 'Setup Religion', icon: Award },
