@@ -18,6 +18,7 @@ import { Controller } from 'react-hook-form';
 import { cn } from './ui/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
 import { motion, AnimatePresence } from 'motion/react';
+import { formatCurrency, parseCurrency, formatWithCommas } from './ui/formatters';
 
 interface EmployeeData {
   EmplID: number;
@@ -331,27 +332,6 @@ export function EmployeeRegistration() {
       }
     }
   }, [isEditing, setValue, watch]);
-
-  // Auto-calculate rates (Daily, Hour)
-  const monthlyRate = watch('MonthlyRate');
-  const dRate = watch('DailyRate');
-  const allowance = watch('Allowance');
-
-  useEffect(() => {
-    if (monthlyRate > 0) {
-      const daily = monthlyRate / 26;
-      const hourly = daily / 8;
-      setValue('DailyRate', parseFloat(daily.toFixed(2)));
-      setValue('HourRate', parseFloat(hourly.toFixed(2)));
-    }
-  }, [monthlyRate, setValue]);
-
-  useEffect(() => {
-    if (dRate > 0 && !monthlyRate) {
-      const hourly = dRate / 8;
-      setValue('HourRate', parseFloat(hourly.toFixed(2)));
-    }
-  }, [dRate, monthlyRate, setValue]);
 
   // Auto-fill global rates if they are missing
   useEffect(() => {
@@ -918,21 +898,136 @@ export function EmployeeRegistration() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Monthly Rate</Label>
-                    <Input type="number" {...register('MonthlyRate')} disabled={isViewOnly} />
+                    <Controller
+                      name="MonthlyRate"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          type="text"
+                          disabled={isViewOnly}
+                          placeholder="0.00"
+                          // If focused, show commas as typed. If blurred, show full .00 format
+                          value={field.value === 0 && !isViewOnly ? '' : formatWithCommas(String(field.value))}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/,/g, '');
+                            if (val === '' || !isNaN(Number(val)) || val === '.') {
+                                const numeric = val === '' ? 0 : parseFloat(val);
+                                field.onChange(val === '' ? 0 : val);
+                                
+                                // Auto-calculate Daily and Hourly
+                                if (numeric > 0) {
+                                  const daily = numeric / 26;
+                                  const hourly = daily / 8;
+                                  setValue('DailyRate', parseFloat(daily.toFixed(4)));
+                                  setValue('HourRate', parseFloat(hourly.toFixed(4)));
+                                }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const numeric = parseCurrency(e.target.value);
+                            field.onChange(numeric);
+                            field.onBlur();
+                          }}
+                          className="font-mono font-bold text-right"
+                        />
+                      )}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Daily Rate</Label>
-                    <Input type="number" {...register('DailyRate')} disabled={isViewOnly} />
+                    <Controller
+                      name="DailyRate"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          type="text"
+                          disabled={isViewOnly}
+                          placeholder="0.00"
+                          value={field.value === 0 && !isViewOnly ? '' : formatWithCommas(String(field.value))}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/,/g, '');
+                            if (val === '' || !isNaN(Number(val)) || val === '.') {
+                                const numeric = val === '' ? 0 : parseFloat(val);
+                                field.onChange(val === '' ? 0 : val);
+
+                                // Auto-calculate Monthly and Hourly
+                                if (numeric > 0) {
+                                  const monthly = numeric * 26;
+                                  const hourly = numeric / 8;
+                                  setValue('MonthlyRate', parseFloat(monthly.toFixed(4)));
+                                  setValue('HourRate', parseFloat(hourly.toFixed(4)));
+                                }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const numeric = parseCurrency(e.target.value);
+                            field.onChange(numeric);
+                            field.onBlur();
+                          }}
+                          className="font-mono font-bold text-right"
+                        />
+                      )}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Allowance</Label>
-                    <Input type="number" {...register('Allowance')} disabled={isViewOnly} />
+                    <Controller
+                      name="Allowance"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          type="text"
+                          disabled={isViewOnly}
+                          placeholder="0.00"
+                          value={field.value === 0 && !isViewOnly ? '' : formatWithCommas(String(field.value))}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/,/g, '');
+                            if (val === '' || !isNaN(Number(val)) || val === '.') {
+                                field.onChange(val === '' ? 0 : val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const numeric = parseCurrency(e.target.value);
+                            field.onChange(numeric);
+                            field.onBlur();
+                          }}
+                          className="font-mono font-bold text-right"
+                        />
+                      )}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Hour Rate</Label>
-                    <Input type="number" {...register('HourRate')} disabled={isViewOnly} />
+                    <Controller
+                      name="HourRate"
+                      control={control}
+                      render={({ field }) => (
+                        <Input
+                          {...field}
+                          type="text"
+                          disabled={isViewOnly}
+                          placeholder="0.00"
+                          value={field.value === 0 && !isViewOnly ? '' : formatWithCommas(String(field.value))}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/,/g, '');
+                            if (val === '' || !isNaN(Number(val)) || val === '.') {
+                                field.onChange(val === '' ? 0 : val);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const numeric = parseCurrency(e.target.value);
+                            field.onChange(numeric);
+                            field.onBlur();
+                          }}
+                          className="font-mono font-bold text-right"
+                        />
+                      )}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">

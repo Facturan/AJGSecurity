@@ -162,14 +162,14 @@ export function LoanLedger({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/10 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20"
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-4xl min-h-[600px] max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-card border border-border rounded-2xl shadow-lg w-full max-w-4xl min-h-[600px] max-h-[90vh] flex flex-col overflow-hidden"
       >
 
         {/* ── Modal Header ── */}

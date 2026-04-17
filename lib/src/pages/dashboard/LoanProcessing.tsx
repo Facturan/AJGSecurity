@@ -133,6 +133,24 @@ export function LoanProcessing() {
 
     setIsLoading(true);
     try {
+      // Check if employee already has an active loan of this type
+      const { data: existingLoans, error: checkError } = await supabase
+        .from('LOANS')
+        .select('loanId')
+        .eq('employeeId', parseInt(formData.employeeId))
+        .eq('loanType', formData.loanType)
+        .eq('status', 'Active')
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      if (existingLoans && existingLoans.length > 0) {
+        setErrorMessage(`This employee already has an active ${formData.loanType}.`);
+        setIsErrorOpen(true);
+        setIsLoading(false);
+        return;
+      }
+
       // Generate a unique transaction ID like LN-5ABC123-9999
       const uniqueLoanRef = `LN-${Date.now().toString(36).toUpperCase()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
 

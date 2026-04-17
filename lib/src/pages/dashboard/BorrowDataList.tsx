@@ -143,13 +143,12 @@ export function BorrowDataList() {
                     <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10 text-xs">Month to Pay</TableHead>
                     <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10 text-xs">Monthly</TableHead>
                     <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center px-10 text-xs">Bi/Monthly</TableHead>
-                    <TableHead className="text-white font-black uppercase tracking-wide h-14 text-center text-xs">Loan ID</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-40 text-center">
+                      <TableCell colSpan={6} className="h-40 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
                           <p className="text-muted-foreground font-medium">Loading records...</p>
@@ -194,19 +193,11 @@ export function BorrowDataList() {
                         <TableCell className="text-center font-bold text-primary tabular-nums px-10">
                           {formatCurrency(item.biMonthlyPayment)}
                         </TableCell>
-                        <TableCell className="text-center">
-                          <Badge
-                            variant="outline"
-                            className="bg-primary/10 border-primary/20 text-primary font-bold text-[11px] uppercase whitespace-nowrap px-3 py-0.5"
-                          >
-                            {item.loanId}
-                          </Badge>
-                        </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-40 text-center">
+                      <TableCell colSpan={6} className="h-40 text-center">
                         <div className="flex flex-col items-center justify-center text-muted-foreground/60">
                           <Search className="w-10 h-10 mb-2 opacity-20" />
                           <p className="font-medium">No borrow data found matching your search.</p>

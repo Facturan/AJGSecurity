@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Printer, Loader2, ChevronDown, Search, Calculator } from 'lucide-react';
+import { Printer, Loader2, ChevronDown, Search, Calculator, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useHeader } from './components/Header';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -9,8 +10,11 @@ import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import { useMasterData } from './MasterDataContext';
 
-function formatNumber(value: number): string {
-  return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+import { formatCurrency, formatWithCommas, parseCurrency } from './ui/formatters';
+import { DatePicker } from './ui/date-picker';
+
+function formatNumber(value: number, precision: number = 2): string {
+  return value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: precision });
 }
 
 function parseInput(value: any): number {
@@ -24,6 +28,8 @@ export function PayrollEntry() {
   const { setHeaderInfo } = useHeader();
   const [netPay, setNetPay] = useState('0.00');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
   // Employee Info
   const [employees, setEmployees] = useState<any[]>([]);
@@ -93,6 +99,7 @@ export function PayrollEntry() {
   const [safetyShoes, setSafetyShoes] = useState('');
   const [foodAllowance, setFoodAllowance] = useState('');
   const [pagIbigPhilhealth, setPagIbigPhilhealth] = useState('');
+  const [pagIbigLoan, setPagIbigLoan] = useState('');
   const [riceCa, setRiceCa] = useState('');
   const [rice, setRice] = useState('');
   const [cpLoan, setCpLoan] = useState('');
@@ -102,6 +109,7 @@ export function PayrollEntry() {
   const [chx, setChx] = useState('');
   const [flagXUniform, setFlagXUniform] = useState('');
   const [totalDeduction, setTotalDeduction] = useState('');
+  const [activeLoans, setActiveLoans] = useState<any[]>([]);
 
   // Employee Contribution
   const [sssEmp, setSssEmp] = useState('');
@@ -142,9 +150,9 @@ export function PayrollEntry() {
   useEffect(() => {
     if (selectedEmpId) {
       if (salaryMethod === 'monthly') {
-        setDailyRate(formatNumber(empMonthlyRate));
+        setDailyRate(formatNumber(empMonthlyRate, 4));
       } else {
-        setDailyRate(formatNumber(empDailyRate));
+        setDailyRate(formatNumber(empDailyRate, 4));
       }
     }
   }, [salaryMethod, selectedEmpId, empDailyRate, empMonthlyRate]);
@@ -167,6 +175,10 @@ export function PayrollEntry() {
     }
   }, [open, selectedEmpId, empName]);
 
+  useEffect(() => {
+    fetchHistory();
+  }, [selectedEmpId, dateFrom, dateTo, datePosting]);
+
   const fetchEmployees = async () => {
     try {
       const { data, error } = await supabase
@@ -178,6 +190,100 @@ export function PayrollEntry() {
       setEmployees(data || []);
     } catch (error: any) {
       toast.error('Error fetching employees: ' + error.message);
+    }
+  };
+
+  const fetchHistory = async () => {
+    if (!selectedEmpId || !dateFrom || !dateTo || !datePosting) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('PAYROLLDATA')
+        .select('*')
+        .eq('EmpID', parseInt(selectedEmpId))
+        .eq('DateFrom', dateFrom)
+        .eq('DateTo', dateTo)
+        .eq('DatePosting', datePosting)
+        .order('PID', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        // Income
+        setSalaryMethod(data.SalaryMethod || 'daily');
+        setDailyRate(formatNumber(data.DailyRate || 0, 4));
+        setNoOfDays(String(data.NoOfDays || ''));
+        setBasePay(formatNumber(data.BasicRate || 0));
+        setOtRegDayHours(String(data.OTRegHrs || ''));
+        setOtSundayHours(String(data.OTSunHrs || ''));
+        setOtSpecialHours(String(data.OTSpecialHrs || ''));
+        setOtLegalHours(String(data.OTLegalHrs || ''));
+        setOtNdHours(String(data.OTNightDiffHrs || ''));
+
+        // Holiday
+        setSpecialHolidayHours(String(data.SpecHolHRS || ''));
+        setSpecialHolidayMult(String(data.SpecHolMult || ''));
+        setLegalHolidayHours(String(data.LegHolHRS || ''));
+        setLegalHolidayMult(String(data.LegHolMult || ''));
+        setSpecialHolidayAmount(formatNumber(data.TotalSpecialDay || 0));
+        setLegalHolidayAmount(formatNumber(data.TotalLegalDay || 0));
+        setTotalHoliday(formatNumber(data.TotalHoliday || 0));
+
+        setAllowance(formatNumber(data.AllowanceRate || 0));
+        setCashGasAllowance(formatNumber(data.CashGasAllowance || 0));
+        setFoodAllowanceIncome(formatNumber(data.FoodAllowanceIncome || 0));
+        setLoadAllowance(formatNumber(data.LoadAllowance || 0));
+        setIncentivesIncome(formatNumber(data.IncentivesIncome || 0));
+        setCommsIncome(String(data.CommsIncome || ''));
+        setOtRefund(String(data.OTRefund || ''));
+        setOuPay(String(data.OverUnderPay || ''));
+
+        // OT Rates (Rates from DB)
+        setOtRegDayAmount(formatNumber(data.OTRegDay || 0, 4));
+        setOtSundayAmount(formatNumber(data.OTSunday || 0, 4));
+        setOtSpecialAmount(formatNumber(data.OTSpecial || 0, 4));
+        setOtLegalAmount(formatNumber(data.OTLegal || 0, 4));
+        setOtNdAmount(formatNumber(data.OTND || 0, 4));
+
+        // Deductions
+        setAbsentDays(String(data.Absent || ''));
+        setLateMinutes(String(data.Late || ''));
+        setComms(formatNumber(data.GlobeExcess || 0));
+        setMpl(formatNumber(data.MPL || 0));
+        setHdmfLoan(formatNumber(data.HDMFLoan || 0));
+        setSssLoan(formatNumber(data.SSSLoan || 0));
+        setElBonitaLoan(formatNumber(data.ElBonitaLoan || 0));
+        setCashAdvance(formatNumber(data.CashAdvance || 0));
+        setStoreAcct(formatNumber(data.StoreAccount || 0));
+        setUniform(formatNumber(data.Uniform || 0));
+        setSafetyShoes(formatNumber(data.Shoes || 0));
+        setFoodAllowance(formatNumber(data.TravelAllowance || 0));
+        setPagIbigPhilhealth(formatNumber(data.PagIbigPhilhealth || 0));
+        setPagIbigLoan(formatNumber(data.PagIbigLoan || 0));
+        setRiceCa(formatNumber(data.RiceCA || 0));
+        setRice(formatNumber(data.Rice || 0));
+        setCpLoan(formatNumber(data.CPLoan || 0));
+        setSssPenaltyJohndorf(formatNumber(data.SSSPenaltyJohndorf || 0));
+        setThailandCA(formatNumber(data.ThailandCA || 0));
+        setMotorUrc(formatNumber(data.MotorURC || 0));
+        setChx(formatNumber(data.CHX || 0));
+        setFlagXUniform(formatNumber(data.FlagXUniform || 0));
+
+        // Contributions
+        setSssEmp(formatNumber(data.EmpSSS || 0));
+        setPhicEmp(formatNumber(data.PHIC || 0));
+        setHdmfEmp(formatNumber(data.EmpHDMF || 0));
+        setWtax(formatNumber(data.WTAX || 0));
+
+        setSssEmployer(formatNumber(data.ComSSS || 0));
+        setPhicEmployer(formatNumber(data.ComPHIC || 0));
+        setHdmfEmployer(formatNumber(data.ComHDMF || 0));
+
+        toast.info('Historical data found and populated.');
+      }
+    } catch (err: any) {
+      console.error('Error fetching historical data:', err);
     }
   };
 
@@ -193,6 +299,16 @@ export function PayrollEntry() {
       setEmpMonthlyRate(emp.MonthlyRate || 0);
       setSalaryMethod(emp.EmpRate?.toLowerCase() || 'daily');
 
+      // Reset input fields for a fresh entry
+      setNoOfDays('');
+      setOtRegDayHours(''); setOtSundayHours(''); setOtSpecialHours(''); setOtLegalHours(''); setOtNdHours('');
+      setSpecialHolidayHours(''); setLegalHolidayHours('');
+      setCashGasAllowance(''); setFoodAllowanceIncome(''); setLoadAllowance('');
+      setIncentivesIncome(''); setCommsIncome(''); setOtRefund('');
+      setOuPay('');
+      setAbsentDays(''); setLateMinutes('');
+
+
       // Populate Contributions
       setSssEmp(formatNumber(emp.MempSSS || 0));
       setPhicEmp(formatNumber(emp.MempPHIC || 0));
@@ -202,42 +318,61 @@ export function PayrollEntry() {
       setPhicEmployer(formatNumber(emp.MComPHIC || 0));
       setHdmfEmployer(formatNumber(emp.MComHDMF || 0));
 
+      // Reset all deductions first
+      setMpl(''); setHdmfLoan(''); setSssLoan(''); setElBonitaLoan('');
+      setCpLoan(''); setCashAdvance(''); setStoreAcct(''); setUniform('');
+      setSafetyShoes(''); setRiceCa(''); setRice(''); setSssPenaltyJohndorf('');
+      setThailandCA(''); setMotorUrc(''); setChx(''); setFlagXUniform('');
+      setPagIbigPhilhealth(''); setPagIbigLoan(''); setComms('');
+
       // Fetch active loans automatically
       try {
+        console.log(`[Diagnostic] Fetching active loans for EmpID: ${emplID}`);
         const { data: loans, error } = await supabase
           .from('LOANS')
           .select('*')
           .eq('employeeId', parseInt(emplID))
           .eq('status', 'Active');
 
-        if (!error && loans) {
-          let vMpl = 0, vHdmfLoan = 0, vSssLoan = 0, vElBonita = 0, vCpLoan = 0;
-          let vCashAdvance = 0, vStoreAcct = 0, vUniform = 0, vShoes = 0;
+        if (error) {
+          console.error('[Diagnostic] Error fetching loans:', error);
+          throw error;
+        }
 
+        console.log(`[Diagnostic] Loans found for ${fullName}:`, loans);
+        if (loans && loans.length > 0) {
+          toast.info(`Loaded ${loans.length} active loans for ${fullName}`);
+          setActiveLoans(loans);
           loans.forEach((loan: any) => {
-            const lType = (loan.loanType || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const rawType = (loan.loanType || '').toLowerCase();
+            const lType = rawType.replace(/[^a-z0-9]/g, '');
             const amt = parseFloat(loan.biMonthlyPayment) || 0;
+            if (amt <= 0) return;
 
-            if (lType.includes('mpl')) vMpl += amt;
-            else if (lType.includes('hdmf')) vHdmfLoan += amt;
-            else if (lType.includes('sss')) vSssLoan += amt;
-            else if (lType.includes('elbonita')) vElBonita += amt;
-            else if (lType.includes('cp')) vCpLoan += amt;
-            else if (lType.includes('cashadvance') || lType.includes('ca')) vCashAdvance += amt;
-            else if (lType.includes('store') || lType.includes('egg') || lType.includes('car')) vStoreAcct += amt;
-            else if (lType.includes('uniform')) vUniform += amt;
-            else if (lType.includes('shoe')) vShoes += amt;
+            const formattedAmt = formatNumber(amt);
+
+            if (lType.includes('mpl')) setMpl(formattedAmt);
+            else if (lType.includes('hdmfloan')) setHdmfLoan(formattedAmt);
+            else if (lType === 'pagibigloan') setPagIbigLoan(formattedAmt);
+            else if (lType.includes('sssloan') || (lType.includes('sss') && !lType.includes('penalty'))) setSssLoan(formattedAmt);
+            else if (lType.includes('elbonita')) setElBonitaLoan(formattedAmt);
+            else if (lType.includes('cp') || lType.includes('office')) setCpLoan(formattedAmt);
+            else if (lType.includes('cashadvance') || lType === 'ca') setCashAdvance(formattedAmt);
+            else if (lType.includes('store') || lType.includes('egg') || lType.includes('car')) setStoreAcct(formattedAmt);
+            else if (lType.includes('uniform') && !lType.includes('flagx')) setUniform(formattedAmt);
+            else if (lType.includes('shoe')) setSafetyShoes(formattedAmt);
+            else if (lType.includes('riceca')) setRiceCa(formattedAmt);
+            else if (lType === 'rice') setRice(formattedAmt);
+            else if (lType.includes('thailand')) setThailandCA(formattedAmt);
+            else if (lType.includes('motor') || lType.includes('urc')) setMotorUrc(formattedAmt);
+            else if (lType.includes('penalty') || lType.includes('johndorf')) setSssPenaltyJohndorf(formattedAmt);
+            else if (lType.includes('chx')) setChx(formattedAmt);
+            else if (lType.includes('flagx') || lType.includes('jersey')) setFlagXUniform(formattedAmt);
+            else if (lType.includes('pagibigphilhealth') || lType.includes('pagibig') || lType.includes('philhealth')) setPagIbigPhilhealth(formattedAmt);
           });
-
-          setMpl(vMpl > 0 ? formatNumber(vMpl) : '');
-          setHdmfLoan(vHdmfLoan > 0 ? formatNumber(vHdmfLoan) : '');
-          setSssLoan(vSssLoan > 0 ? formatNumber(vSssLoan) : '');
-          setElBonitaLoan(vElBonita > 0 ? formatNumber(vElBonita) : '');
-          setCpLoan(vCpLoan > 0 ? formatNumber(vCpLoan) : '');
-          setCashAdvance(vCashAdvance > 0 ? formatNumber(vCashAdvance) : '');
-          setStoreAcct(vStoreAcct > 0 ? formatNumber(vStoreAcct) : '');
-          setUniform(vUniform > 0 ? formatNumber(vUniform) : '');
-          setSafetyShoes(vShoes > 0 ? formatNumber(vShoes) : '');
+        } else {
+          console.log(`[Diagnostic] No active loans found for ${fullName}`);
+          setActiveLoans([]);
         }
       } catch (err) {
         console.error('Error auto-filling loans:', err);
@@ -248,37 +383,176 @@ export function PayrollEntry() {
     }
   };
 
+  const processLoanPayments = async (pPostingDate: string) => {
+    if (!selectedEmpId) return;
+
+    try {
+      console.log('[Diagnostic] processLoanPayments: Starting fresh fetch for loans...');
+
+      // Fetch fresh loans directly within the save process to avoid state race conditions
+      const { data: loans, error: fetchError } = await supabase
+        .from('LOANS')
+        .select('*')
+        .eq('employeeId', parseInt(selectedEmpId))
+        .eq('status', 'Active');
+
+      if (fetchError) throw fetchError;
+      if (!loans || loans.length === 0) {
+        console.log('[Diagnostic] No active loans found in DB for this employee.');
+        return;
+      }
+
+      console.log(`[Diagnostic] Found ${loans.length} active loans for processing.`);
+
+      // Map of deduction field values
+      const deductions = {
+        mpl: parseInput(mpl),
+        hdmfloan: parseInput(hdmfLoan),
+        pagibigloan: parseInput(pagIbigLoan),
+        sssloan: parseInput(sssLoan),
+        elbonitaloan: parseInput(elBonitaLoan),
+        cploan: parseInput(cpLoan),
+        cashadvance: parseInput(cashAdvance),
+        storeaccount: parseInput(storeAcct),
+        uniform: parseInput(uniform),
+        shoes: parseInput(safetyShoes),
+        riceca: parseInput(riceCa),
+        rice: parseInput(rice),
+        thailandca: parseInput(thailandCA),
+        motorurc: parseInput(motorUrc),
+        ssspenaltyjohndorf: parseInput(sssPenaltyJohndorf),
+        chx: parseInput(chx),
+        flagxuniform: parseInput(flagXUniform),
+        pagibigphilhealth: parseInput(pagIbigPhilhealth)
+      };
+
+      const paymentRecords: any[] = [];
+
+      loans.forEach(loan => {
+        const rawType = (loan.loanType || '').toLowerCase();
+        const lType = rawType.replace(/[^a-z0-9]/g, '');
+        let matchedAmount = 0;
+
+        if (lType.includes('mpl')) matchedAmount = deductions.mpl;
+        else if (lType.includes('hdmfloan')) matchedAmount = deductions.hdmfloan;
+        else if (lType === 'pagibigloan') matchedAmount = deductions.pagibigloan;
+        else if (lType.includes('sssloan') || (lType.includes('sss') && !lType.includes('penalty'))) matchedAmount = deductions.sssloan;
+        else if (lType.includes('elbonita')) matchedAmount = deductions.elbonitaloan;
+        else if (lType.includes('cp') || lType.includes('office')) matchedAmount = deductions.cploan;
+        else if (lType.includes('cashadvance') || lType === 'ca') matchedAmount = deductions.cashadvance;
+        else if (lType.includes('store') || lType.includes('egg') || lType.includes('car')) matchedAmount = deductions.storeaccount;
+        else if (lType.includes('uniform') && !lType.includes('flagx')) matchedAmount = deductions.uniform;
+        else if (lType.includes('shoe')) matchedAmount = deductions.shoes;
+        else if (lType.includes('riceca')) matchedAmount = deductions.riceca;
+        else if (lType === 'rice') matchedAmount = deductions.rice;
+        else if (lType.includes('thailand')) matchedAmount = deductions.thailandca;
+        else if (lType.includes('motor') || lType.includes('urc')) matchedAmount = deductions.motorurc;
+        else if (lType.includes('penalty') || lType.includes('johndorf')) matchedAmount = deductions.ssspenaltyjohndorf;
+        else if (lType.includes('chx')) matchedAmount = deductions.chx;
+        else if (lType.includes('flagx') || lType.includes('jersey')) matchedAmount = deductions.flagxuniform;
+        else if (lType.includes('pagibigphilhealth') || lType.includes('pagibig') || lType.includes('philhealth')) matchedAmount = deductions.pagibigphilhealth;
+
+        if (matchedAmount > 0) {
+          console.log(`[Diagnostic] Success! Matched ${loan.loanType} (${loan.loanId}) with amount: ${matchedAmount}`);
+          paymentRecords.push({
+            loanId: loan.loanId,
+            paymentDate: pPostingDate,
+            paymentAmount: matchedAmount
+          });
+        }
+      });
+
+      if (paymentRecords.length > 0) {
+        console.log('[Diagnostic] Final Step: Inserting to LOAN_PAYMENTS...', paymentRecords);
+        const { error: insertError } = await supabase
+          .from('LOAN_PAYMENTS')
+          .insert(paymentRecords);
+
+        if (insertError) throw insertError;
+
+        console.log('[Diagnostic] Loan Ledger updated successfully.');
+        toast.success(`Recorded ${paymentRecords.length} loan payment(s) to ledger.`);
+      } else {
+        console.log('[Diagnostic] No loan matches were found among entered deductions.');
+      }
+    } catch (err: any) {
+      console.error('[Diagnostic] Loan Sync critical error:', err);
+      toast.error(`Loan Ledger update failed: ${err.message || 'Unknown error'}`);
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedEmpId) {
       toast.error('Please select an employee');
       return;
     }
+    if (!dateFrom || !dateTo) {
+      toast.error('Please specify the payroll period (From/To dates)');
+      return;
+    }
+    setShowSaveConfirm(true);
+  };
+
+  const confirmSave = async () => {
+    setShowSaveConfirm(false);
+    // Ensure all calculations are up to date before saving
+    calculateNetPay();
 
     setIsSubmitting(true);
     try {
+      // Duplicate detection: Check if record exists for this employee and period
+      const { data: existing, error: checkError } = await supabase
+        .from('PAYROLLDATA')
+        .select('PID')
+        .eq('EmpID', parseInt(selectedEmpId))
+        .eq('DatePosting', datePosting)
+        .eq('DateFrom', dateFrom || null)
+        .eq('DateTo', dateTo || null)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+      if (existing) {
+        setShowDuplicateModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
       const dbData = {
         EmpID: parseInt(selectedEmpId),
         EmpName: empName,
         SalaryMethod: salaryMethod,
         DateFrom: dateFrom || null,
         DateTo: dateTo || null,
+        DatePosting: datePosting,
         DailyRate: parseInput(dailyRate),
         NoOfDays: parseInput(noOfDays),
         BasicRate: parseInput(basePay),
+
+        // Overtime Hours
         OTRegHrs: parseInput(otRegDayHours),
-        TotalOTRegHrs: parseInput(otRegDayAmount),
         OTSunHrs: parseInput(otSundayHours),
-        TotalOTSunHrs: parseInput(otSundayAmount),
         OTSpecialHrs: parseInput(otSpecialHours),
-        TotalOTSpecialHrs: parseInput(otSpecialAmount),
         OTLegalHrs: parseInput(otLegalHours),
-        TotalOTLegalHrs: parseInput(otLegalAmount),
         OTNightDiffHrs: parseInput(otNdHours),
-        TotalOTNightDiffHrs: parseInput(otNdAmount),
+
+        // Overtime Amounts
+        TotalOTRegHrs: parseInput(otRegDayAmount) * parseInput(otRegDayHours),
+        TotalOTSunHrs: parseInput(otSundayAmount) * parseInput(otSundayHours),
+        TotalOTSpecialHrs: parseInput(otSpecialAmount) * parseInput(otSpecialHours),
+        TotalOTLegalHrs: parseInput(otLegalAmount) * parseInput(otLegalHours),
+        TotalOTNightDiffHrs: parseInput(otNdAmount) * parseInput(otNdHours),
         TotalOTPay: parseInput(totalOtPay),
+
+        // Holiday
         TotalSpecialDay: parseInput(specialHolidayAmount),
         TotalLegalDay: parseInput(legalHolidayAmount),
         TotalHoliday: parseInput(totalHoliday),
+        SpecHolHRS: parseInput(specialHolidayHours),
+        SpecHolMult: parseInput(specialHolidayMult),
+        LegHolHRS: parseInput(legalHolidayHours),
+        LegHolMult: parseInput(legalHolidayMult),
+
+        // Allowances and Income
         AllowanceRate: parseInput(allowance),
         TotalAllowance: parseInput(allowanceDisplay),
         FiveDaysIncentiveDays: parseInput(noOfDays),
@@ -291,6 +565,8 @@ export function PayrollEntry() {
         OTRefund: parseInput(otRefund),
         OverUnderPay: parseInput(ouPay),
         TotalIncome: parseInput(totalIncome),
+
+        // Deductions
         Absent: parseInput(absentDays),
         TotalAbsent: parseInput(absentAmount),
         Late: parseInput(lateMinutes),
@@ -299,24 +575,14 @@ export function PayrollEntry() {
         MPL: parseInput(mpl),
         HDMFLoan: parseInput(hdmfLoan),
         SSSLoan: parseInput(sssLoan),
+        ElBonitaLoan: parseInput(elBonitaLoan),
         CashAdvance: parseInput(cashAdvance),
         StoreAccount: parseInput(storeAcct),
         Uniform: parseInput(uniform),
         Shoes: parseInput(safetyShoes),
         TravelAllowance: parseInput(foodAllowance),
-        TotalDeduc: parseInput(totalDeduction),
-        EmpSSS: parseInput(sssEmp),
-        PHIC: parseInput(phicEmp),
-        EmpHDMF: parseInput(hdmfEmp),
-        WTAX: parseInput(wtax),
-        TotalEmpCont: parseInput(totalEmpContribution),
-        ComSSS: parseInput(sssEmployer),
-        ComPHIC: parseInput(phicEmployer),
-        ComHDMF: parseInput(hdmfEmployer),
-        NetPay: parseInput(netPay),
-        DatePosting: datePosting,
-        ElBonitaLoan: parseInput(elBonitaLoan),
         PagIbigPhilhealth: parseInput(pagIbigPhilhealth),
+        PagIbigLoan: parseInput(pagIbigLoan),
         RiceCA: parseInput(riceCa),
         Rice: parseInput(rice),
         CPLoan: parseInput(cpLoan),
@@ -324,7 +590,29 @@ export function PayrollEntry() {
         ThailandCA: parseInput(thailandCA),
         MotorURC: parseInput(motorUrc),
         CHX: parseInput(chx),
-        FlagXUniform: parseInput(flagXUniform)
+        FlagXUniform: parseInput(flagXUniform),
+        TotalDeduc: parseInput(totalDeduction),
+
+        // Employee Contributions
+        EmpSSS: parseInput(sssEmp),
+        PHIC: parseInput(phicEmp),
+        EmpHDMF: parseInput(hdmfEmp),
+        WTAX: parseInput(wtax),
+        TotalEmpCont: parseInput(totalEmpContribution),
+
+        // Employer Contributions
+        ComSSS: parseInput(sssEmployer),
+        ComPHIC: parseInput(phicEmployer),
+        ComHDMF: parseInput(hdmfEmployer),
+
+        // Rates
+        OTRegDay: parseInput(otRegDayAmount),
+        OTSunday: parseInput(otSundayAmount),
+        OTSpecial: parseInput(otSpecialAmount),
+        OTLegal: parseInput(otLegalAmount),
+        OTND: parseInput(otNdAmount),
+
+        NetPay: parseInput(netPay)
       };
 
       const { error } = await supabase
@@ -332,7 +620,11 @@ export function PayrollEntry() {
         .insert([dbData]);
 
       if (error) throw error;
-      toast.success('Payroll data saved successfully');
+
+      // Update Loan Ledger automatically
+      await processLoanPayments(datePosting);
+
+      toast.success('Payroll saved and Loan Ledger updated successfully');
     } catch (error: any) {
       toast.error('Error saving payroll data: ' + error.message);
     } finally {
@@ -370,7 +662,7 @@ export function PayrollEntry() {
     setComms(''); setMpl(''); setHdmfLoan(''); setSssLoan('');
     setElBonitaLoan(''); setCashAdvance(''); setStoreAcct('');
     setUniform(''); setSafetyShoes(''); setFoodAllowance('');
-    setPagIbigPhilhealth(''); setRiceCa(''); setRice('');
+    setPagIbigPhilhealth(''); setPagIbigLoan(''); setRiceCa(''); setRice('');
     setCpLoan(''); setSssPenaltyJohndorf(''); setThailandCA(''); setMotorUrc(''); setChx(''); setFlagXUniform('');
     setTotalDeduction('');
     // Contributions
@@ -394,11 +686,11 @@ export function PayrollEntry() {
     const otSpec = hr * parseInput(otSpecialMult);
     const otLeg = hr * parseInput(otLegalMult);
     const otNd = (hr * parseInput(otNdMult1)) * parseInput(otNdMult2);
-    setOtRegDayAmount(formatNumber(otReg));
-    setOtSundayAmount(formatNumber(otSun));
-    setOtSpecialAmount(formatNumber(otSpec));
-    setOtLegalAmount(formatNumber(otLeg));
-    setOtNdAmount(formatNumber(otNd));
+    setOtRegDayAmount(formatNumber(otReg, 4));
+    setOtSundayAmount(formatNumber(otSun, 4));
+    setOtSpecialAmount(formatNumber(otSpec, 4));
+    setOtLegalAmount(formatNumber(otLeg, 4));
+    setOtNdAmount(formatNumber(otNd, 4));
   }, [dailyRate, otRegDayMult, otSundayMult, otSpecialMult, otLegalMult, otNdMult1, otNdMult2, salaryMethod, empDailyRate]);
 
   const recalcOtAmounts = useCallback(() => {
@@ -480,6 +772,7 @@ export function PayrollEntry() {
       parseInput(uniform) +
       parseInput(safetyShoes) +
       parseInput(foodAllowance) +
+      parseInput(pagIbigLoan) +
       parseInput(pagIbigPhilhealth) +
       parseInput(riceCa) +
       parseInput(rice) +
@@ -540,8 +833,11 @@ export function PayrollEntry() {
       parseInput(comms) + parseInput(mpl) + parseInput(hdmfLoan) + parseInput(sssLoan) +
       parseInput(elBonitaLoan) +
       parseInput(cashAdvance) + parseInput(storeAcct) + parseInput(uniform) + parseInput(safetyShoes) +
-      parseInput(foodAllowance) + parseInput(pagIbigPhilhealth) +
-      parseInput(riceCa) + parseInput(rice) + parseInput(cpLoan) + parseInput(sssPenaltyJohndorf) + parseInput(thailandCA) + parseInput(motorUrc);
+      parseInput(foodAllowance) +
+      parseInput(pagIbigLoan) +
+      parseInput(pagIbigPhilhealth) +
+      parseInput(riceCa) + parseInput(rice) + parseInput(cpLoan) + parseInput(sssPenaltyJohndorf) + parseInput(thailandCA) + parseInput(motorUrc) +
+      parseInput(chx) + parseInput(flagXUniform);
 
     const contribution = parseInput(sssEmp) + parseInput(phicEmp) + parseInput(hdmfEmp) + parseInput(wtax);
 
@@ -574,8 +870,8 @@ export function PayrollEntry() {
           <div className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-[80px_140px_160px_1fr] gap-2 items-start sm:items-center">
               <Label className="font-bold text-sm text-[#1C2B33]">ID No</Label>
-              <Input className="h-8 bg-white border-[#E5E7EB] font-bold text-[#1C2B33]" value={empIdNo} readOnly />
-              <Input className="h-8 text-left tabular-nums bg-white border-[#E5E7EB] font-bold text-[#1C2B33]" value={selectedEmpId || ''} readOnly />
+              <Input className="h-8 bg-white border-black font-bold text-[#1C2B33]" value={empIdNo} readOnly />
+              <Input className="h-8 text-left tabular-nums bg-white border-black font-bold text-[#1C2B33]" value={selectedEmpId || ''} readOnly />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[80px_308px_1fr] gap-2 items-start sm:items-center">
               <Label className="font-bold text-sm text-[#1C2B33]">Employee</Label>
@@ -598,7 +894,7 @@ export function PayrollEntry() {
                       setOpen(true);
                       setSearchQuery('');
                     }}
-                    className="h-8 w-full bg-card border border-[#E5E7EB] rounded-md pl-3 pr-8 text-[#1C2B33] font-bold text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:font-normal placeholder:text-muted-foreground/50"
+                    className="h-8 w-full bg-card border border-black rounded-md pl-3 pr-8 text-[#1C2B33] font-bold text-sm focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:font-normal placeholder:text-muted-foreground/50"
                   />
                   <ChevronDown
                     className={`absolute right-3 h-4 w-4 shrink-0 text-[#1C2B33] pointer-events-none transition-transform ${open ? 'rotate-180' : ''}`}
@@ -649,7 +945,7 @@ export function PayrollEntry() {
             <div className="grid grid-cols-1 sm:grid-cols-[80px_1fr_100px_1fr] gap-2 items-start sm:items-center">
               <Label className="font-bold text-sm text-[#1C2B33]">Method</Label>
               <Select value={salaryMethod} onValueChange={setSalaryMethod}>
-                <SelectTrigger className="h-8 text-[#1C2B33] bg-card border-[#E5E7EB]">
+                <SelectTrigger className="h-8 text-[#1C2B33] bg-card border-black">
                   <SelectValue placeholder="Method" />
                 </SelectTrigger>
                 <SelectContent>
@@ -662,22 +958,34 @@ export function PayrollEntry() {
           <div className="space-y-2">
             <div className="grid grid-cols-1 sm:grid-cols-[110px_1fr] gap-2 items-start sm:items-center">
               <Label className="font-bold text-sm text-[#1C2B33]">Posting</Label>
-              <Input className="h-8 text-[#1C2B33] bg-card border-[#E5E7EB]" type="date" value={datePosting} onChange={(e) => setDatePosting(e.target.value)} />
+              <DatePicker
+                value={datePosting}
+                onChange={setDatePosting}
+                className="h-8 border-black shadow-none"
+              />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-[110px_1fr_40px_1fr] gap-2 items-start sm:items-center">
               <Label className="font-bold text-sm text-[#1C2B33]">From</Label>
-              <Input className="h-8 text-[#1C2B33] bg-card border-[#E5E7EB]" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+              <DatePicker
+                value={dateFrom}
+                onChange={setDateFrom}
+                className="h-8 border-black shadow-none"
+              />
               <Label className="font-bold text-sm sm:text-right text-[#1C2B33]">To:</Label>
-              <Input className="h-8 text-[#1C2B33] bg-card border-[#E5E7EB]" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+              <DatePicker
+                value={dateTo}
+                onChange={setDateTo}
+                className="h-8 border-black shadow-none"
+              />
             </div>
           </div>
         </div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1px] p-[1px] bg-border/50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[1px] p-[1px] border-t border-black bg-border/50">
           {/* Column 1 - Income */}
-          <div className="bg-card text-[#1C2B33] shadow-sm">
-            <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
+          <div className="bg-card text-[#1C2B33] shadow-sm border-r border-black">
+            <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-black text-[#1C2B33] uppercase">
               Income
             </div>
             <div className="p-3 space-y-2">
@@ -685,15 +993,16 @@ export function PayrollEntry() {
               <div className="grid grid-cols-[auto_1fr_auto_1fr] gap-x-3 gap-y-1 items-center">
                 <Label className="text-[11px] font-bold text-[#1C2B33] whitespace-nowrap">{salaryMethod === 'monthly' ? 'Monthly Rate' : 'Daily Rate'}</Label>
                 <Input
-                  className="h-7 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md text-[#1C2B33]"
+                  className="h-7 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md text-[#1C2B33]"
                   value={dailyRate}
-                  onChange={(e) => setDailyRate(e.target.value)}
+                  onChange={(e) => setDailyRate(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setDailyRate(formatCurrency(e.target.value))}
                 />
                 <Label className="text-[11px] font-bold text-[#1C2B33]">No of Days</Label>
                 <Input
-                  className="h-7 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md text-[#1C2B33]"
+                  className="h-7 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md text-[#1C2B33]"
                   value={noOfDays}
-                  onChange={(e) => setNoOfDays(e.target.value)}
+                  onChange={(e) => setNoOfDays(formatWithCommas(e.target.value))}
                 />
               </div>
 
@@ -701,7 +1010,7 @@ export function PayrollEntry() {
               <div className="grid grid-cols-[50px_1fr] gap-2 items-center py-0.5">
                 <Label className="text-[12px] font-bold text-black">AMOUNT</Label>
                 <Input
-                  className="h-8 bg-white font-black text-right tabular-nums text-black px-2 w-full border-[#E5E7EB]"
+                  className="h-8 bg-white font-black text-right tabular-nums text-black px-2 w-full border-black"
                   value={basePay}
                   readOnly
                 />
@@ -712,12 +1021,12 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">5 Days Incentive</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-muted/20"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-muted/20"
                   value={incentiveRate}
                   readOnly
                 />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-black"
                   value={incentiveAmount}
                   readOnly
                 />
@@ -725,7 +1034,7 @@ export function PayrollEntry() {
               <div className="grid grid-cols-[50px_1fr] gap-2 items-center pt-1 mt-1">
                 <Label className="text-[11px] font-black text-black uppercase tracking-wide">Total</Label>
                 <Input
-                  className="h-7 text-xs bg-white font-black text-black px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-7 text-xs bg-white font-black text-black px-2 text-right tabular-nums border-black"
                   value={formatNumber(parseInput(basePay) + parseInput(incentiveAmount))}
                   readOnly
                 />
@@ -736,12 +1045,12 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">OT Reg Day</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={otRegDayHours}
                   onChange={(e) => setOtRegDayHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-black"
                   value={otRegDayHours ? otRegDayAmount : ''}
                   readOnly
                 />
@@ -750,12 +1059,12 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">OT Sunday</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={otSundayHours}
                   onChange={(e) => setOtSundayHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-black"
                   value={otSundayHours ? otSundayAmount : ''}
                   readOnly
                 />
@@ -764,12 +1073,12 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">OT Special</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={otSpecialHours}
                   onChange={(e) => setOtSpecialHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-black"
                   value={otSpecialHours ? otSpecialAmount : ''}
                   readOnly
                 />
@@ -778,12 +1087,12 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">OT Legal</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={otLegalHours}
                   onChange={(e) => setOtLegalHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-black"
                   value={otLegalHours ? otLegalAmount : ''}
                   readOnly
                 />
@@ -792,12 +1101,12 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">OT ND</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={otNdHours}
                   onChange={(e) => setOtNdHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-black"
                   value={otNdHours ? otNdAmount : ''}
                   readOnly
                 />
@@ -815,7 +1124,7 @@ export function PayrollEntry() {
                   EXE
                 </Button>
                 <Input
-                  className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-[#E5E7EB]"
+                  className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-black"
                   value={totalOtPay}
                   readOnly
                 />
@@ -826,17 +1135,17 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">Special/hr</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-black bg-white rounded-md"
                   value={specialHolidayMult}
                   onChange={(e) => setSpecialHolidayMult(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-black bg-white rounded-md"
                   value={specialHolidayHours}
                   onChange={(e) => setSpecialHolidayHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-black"
                   value={specialHolidayAmount}
                   readOnly
                 />
@@ -845,17 +1154,17 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">Legal/hr</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-black bg-white rounded-md"
                   value={legalHolidayMult}
                   onChange={(e) => setLegalHolidayMult(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums border-black bg-white rounded-md"
                   value={legalHolidayHours}
                   onChange={(e) => setLegalHolidayHours(e.target.value)}
                 />
                 <Input
-                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-[#E5E7EB]"
+                  className="h-6 text-xs bg-white font-black text-[#1C2B33] px-2 text-right tabular-nums border-black"
                   value={legalHolidayAmount}
                   readOnly
                 />
@@ -872,7 +1181,7 @@ export function PayrollEntry() {
                     EXE
                   </Button>
                   <Input
-                    className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-[#E5E7EB]"
+                    className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-black"
                     value={totalHoliday}
                     readOnly
                   />
@@ -883,43 +1192,47 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">Cash/Gas Allowance</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={cashGasAllowance}
-                  onChange={(e) => setCashGasAllowance(e.target.value)}
+                  onChange={(e) => setCashGasAllowance(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setCashGasAllowance(formatCurrency(e.target.value))}
                 />
               </div>
               <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
                 <Label className="text-[11px] font-bold text-[#1C2B33]">Food Allowance</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={foodAllowanceIncome}
-                  onChange={(e) => setFoodAllowanceIncome(e.target.value)}
+                  onChange={(e) => setFoodAllowanceIncome(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setFoodAllowanceIncome(formatCurrency(e.target.value))}
                 />
               </div>
               <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
                 <Label className="text-[11px] font-bold text-[#1C2B33]">Load Allowance</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={loadAllowance}
-                  onChange={(e) => setLoadAllowance(e.target.value)}
+                  onChange={(e) => setLoadAllowance(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setLoadAllowance(formatCurrency(e.target.value))}
                 />
               </div>
               <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
                 <Label className="text-[11px] font-bold text-[#1C2B33]">Incentives</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={incentivesIncome}
-                  onChange={(e) => setIncentivesIncome(e.target.value)}
+                  onChange={(e) => setIncentivesIncome(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setIncentivesIncome(formatCurrency(e.target.value))}
                 />
               </div>
               <div className="grid grid-cols-[110px_1fr_100px] gap-2 items-center">
                 <Label className="text-[11px] font-bold text-[#1C2B33]">COMMS</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={commsIncome}
                   onChange={(e) => setCommsIncome(e.target.value)}
                 />
@@ -928,7 +1241,7 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">OT Refund</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={otRefund}
                   onChange={(e) => setOtRefund(e.target.value)}
                 />
@@ -939,14 +1252,14 @@ export function PayrollEntry() {
                 <Label className="text-[11px] font-bold text-[#1C2B33]">O/U Pay</Label>
                 <div />
                 <Input
-                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-[#E5E7EB] bg-white rounded-md"
+                  className="h-6 text-xs text-[#1C2B33] font-bold px-2 text-right tabular-nums border-black bg-white rounded-md"
                   value={ouPay}
                   onChange={(e) => setOuPay(e.target.value)}
                 />
               </div>
 
               { }
-              <div className="flex gap-2 items-center pt-1 border-[#E5E7EB] mt-2">
+              <div className="flex gap-2 items-center pt-1 border-black mt-2">
                 <Label className="text-[10px] font-black text-[#1C2B33] uppercase tracking-widest shrink-0">Gross Income</Label>
                 <Button
                   className="h-8 w-12 shrink-0 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none rounded-md text-[10px] font-black"
@@ -962,7 +1275,7 @@ export function PayrollEntry() {
                   EXE
                 </Button>
                 <Input
-                  className="h-9 flex-1 bg-white text-[#1C2B33] font-black text-right tabular-nums text-lg px-2 border-[#E5E7EB]"
+                  className="h-9 flex-1 bg-white text-[#1C2B33] font-black text-right tabular-nums text-lg px-2 border-black"
                   value={totalIncome}
                   readOnly
                 />
@@ -971,95 +1284,184 @@ export function PayrollEntry() {
           </div>
 
           {/* Column 2 - Deductions */}
-          <div className="bg-card text-[#1C2B33]">
-            <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
+          <div className="bg-card text-[#1C2B33] border-r border-black">
+            <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-black text-[#1C2B33] uppercase">
               Deductions
             </div>
             <div className="p-2 space-y-2">
               <div className="grid grid-cols-[1fr_120px_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-[#1C2B33]">Absent (Days)</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={absentDays} onChange={(e) => setAbsentDays(e.target.value)} />
-                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-[#E5E7EB]" value={absentAmount} onChange={(e) => setAbsentAmount(e.target.value)} />
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md" value={absentDays} onChange={(e) => setAbsentDays(e.target.value)} />
+                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-black" value={absentAmount} onChange={(e) => setAbsentAmount(e.target.value)} />
               </div>
               <div className="grid grid-cols-[1fr_120px_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Late (Minutes)</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={lateMinutes} onChange={(e) => setLateMinutes(e.target.value)} />
-                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-[#E5E7EB]" value={lateAmount} onChange={(e) => setLateAmount(e.target.value)} />
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md" value={lateMinutes} onChange={(e) => setLateMinutes(e.target.value)} />
+                <Input className="h-6 text-xs bg-white text-right tabular-nums font-black text-[#1C2B33] px-1 border-black" value={lateAmount} onChange={(e) => setLateAmount(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
+                <Label className="text-xs font-black text-black">Pag-Ibig Loan</Label>
+                <Input
+                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
+                  value={pagIbigLoan}
+                  onChange={(e) => setPagIbigLoan(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setPagIbigLoan(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-black text-black">Pag-Ibig/Philhealth</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={pagIbigPhilhealth} onChange={(e) => setPagIbigPhilhealth(e.target.value)} />
+                <Input
+                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
+                  value={pagIbigPhilhealth}
+                  onChange={(e) => setPagIbigPhilhealth(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setPagIbigPhilhealth(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">MPL(Pag-ibig Loan)</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={mpl} onChange={(e) => setMpl(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={mpl}
+                  onChange={(e) => setMpl(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setMpl(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">CP Office Loan</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={cpLoan} onChange={(e) => setCpLoan(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={cpLoan}
+                  onChange={(e) => setCpLoan(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setCpLoan(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-black text-black">El Bonita Loan</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={elBonitaLoan} onChange={(e) => setElBonitaLoan(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={elBonitaLoan}
+                  onChange={(e) => setElBonitaLoan(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setElBonitaLoan(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">HDMF Loan(Pag-ibig Loan)</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={hdmfLoan} onChange={(e) => setHdmfLoan(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={hdmfLoan}
+                  onChange={(e) => setHdmfLoan(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setHdmfLoan(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">SSS Loan</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={sssLoan} onChange={(e) => setSssLoan(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={sssLoan}
+                  onChange={(e) => setSssLoan(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setSssLoan(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">SSS Penalty Johndorf</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={sssPenaltyJohndorf} onChange={(e) => setSssPenaltyJohndorf(e.target.value)} />
+                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md" value={sssPenaltyJohndorf} onChange={(e) => setSssPenaltyJohndorf(e.target.value)} />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Cash Advance(CA)</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={cashAdvance} onChange={(e) => setCashAdvance(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={cashAdvance}
+                  onChange={(e) => setCashAdvance(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setCashAdvance(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">EGG/CAR</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={storeAcct} onChange={(e) => setStoreAcct(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={storeAcct}
+                  onChange={(e) => setStoreAcct(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setStoreAcct(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Uniform P.O</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={uniform} onChange={(e) => setUniform(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={uniform}
+                  onChange={(e) => setUniform(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setUniform(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">CHX</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={chx} onChange={(e) => setChx(e.target.value)} />
+                <Input
+                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
+                  value={chx}
+                  onChange={(e) => setChx(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setChx(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Flag X Uniform/Jersey</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={flagXUniform} onChange={(e) => setFlagXUniform(e.target.value)} />
+                <Input
+                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
+                  value={flagXUniform}
+                  onChange={(e) => setFlagXUniform(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setFlagXUniform(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Safety shoes</Label>
-                <Input className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-[#E5E7EB]" value={safetyShoes} onChange={(e) => setSafetyShoes(e.target.value)} />
+                <Input
+                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
+                  value={safetyShoes}
+                  onChange={(e) => setSafetyShoes(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setSafetyShoes(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Rice CA</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={riceCa} onChange={(e) => setRiceCa(e.target.value)} />
+                <Input
+                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
+                  value={riceCa}
+                  onChange={(e) => setRiceCa(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setRiceCa(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Rice</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={rice} onChange={(e) => setRice(e.target.value)} />
+                <Input
+                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
+                  value={rice}
+                  onChange={(e) => setRice(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setRice(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Thailand (C.A)</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={thailandCA} onChange={(e) => setThailandCA(e.target.value)} />
+                <Input
+                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
+                  value={thailandCA}
+                  onChange={(e) => setThailandCA(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setThailandCA(formatCurrency(e.target.value))}
+                />
               </div>
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
                 <Label className="text-xs font-bold text-black">Motor URC</Label>
-                <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-[#E5E7EB] rounded-md" value={motorUrc} onChange={(e) => setMotorUrc(e.target.value)} />
+                <Input
+                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
+                  value={motorUrc}
+                  onChange={(e) => setMotorUrc(formatWithCommas(e.target.value))}
+                  onBlur={(e) => setMotorUrc(formatCurrency(e.target.value))}
+                />
               </div>
 
-              <div className="flex gap-2 items-center pt-1 border-[#E5E7EB] mt-2">
+              <div className="flex gap-2 items-center pt-1 border-black mt-2">
                 <Label className="text-[10px] font-black text-black uppercase tracking-widest shrink-0">Total Deduction</Label>
                 <div className="flex flex-1 gap-1 items-center">
                   <Button className="h-8 w-12 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none text-[10px] font-black" onClick={() => { recalcAbsent(); recalcLate(); recalcTotalDeduction(); }}>EXE</Button>
-                  <Input className="h-8 flex-1 bg-white text-black font-black text-right tabular-nums text-lg px-2 border-[#E5E7EB]" value={totalDeduction} readOnly />
+                  <Input className="h-8 flex-1 bg-white text-black font-black text-right tabular-nums text-lg px-2 border-black" value={totalDeduction} readOnly />
                 </div>
               </div>
 
@@ -1070,86 +1472,86 @@ export function PayrollEntry() {
           {/* Column 3 - Contributions and OT Rates */}
           <div className="bg-white space-y-[1px]">
             <div className="bg-card text-[#1C2B33]">
-              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
+              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-black text-[#1C2B33] uppercase">
                 Employee Contributions
               </div>
               <div className="p-2 space-y-2">
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">SSS</Label>
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={sssEmp} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-black rounded-md" value={sssEmp} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">PHIC</Label>
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={phicEmp} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-black rounded-md" value={phicEmp} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">HDMF</Label>
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={hdmfEmp} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-black rounded-md" value={hdmfEmp} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">WTax</Label>
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={wtax} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-black rounded-md" value={wtax} readOnly />
                 </div>
                 <div className="pt-1">
                   <div className="flex gap-1">
                     <Button className="h-7 w-12 bg-[#0082FB] hover:bg-[#0064E0] text-white border-none text-[10px] font-black" onClick={recalcEmpContribution}>EXE</Button>
-                    <Input className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-[#E5E7EB]" value={totalEmpContribution} readOnly />
+                    <Input className="h-7 flex-1 bg-white font-black text-right tabular-nums text-[#1C2B33] px-2 border-black" value={totalEmpContribution} readOnly />
                   </div>
                 </div>
               </div>
             </div>
 
             <div className="bg-card text-[#1C2B33]">
-              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
+              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-t border-b border-black text-[#1C2B33] uppercase">
                 Employer Contributions
               </div>
               <div className="p-2 space-y-2">
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">SSS</Label>
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={sssEmployer} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-black rounded-md" value={sssEmployer} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">PHIC</Label>
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={phicEmployer} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-black rounded-md" value={phicEmployer} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto] gap-2 items-center">
                   <Label className="text-xs font-bold text-[#1C2B33]">HDMF</Label>
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-[#E5E7EB] rounded-md" value={hdmfEmployer} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[120px] bg-white border-black rounded-md" value={hdmfEmployer} readOnly />
                 </div>
               </div>
             </div>
 
             <div className="bg-card text-[#1C2B33]">
-              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-b border-[#E5E7EB] text-[#1C2B33] uppercase">
+              <div className="bg-white px-3 py-2 font-bold text-sm tracking-wide border-t border-b border-black text-[#1C2B33] uppercase">
                 Overtime Rates Per Hour
               </div>
               <div className="p-2 space-y-2">
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
                   <Label className="text-[11px] font-bold text-[#1C2B33]">OTRegDay</Label>
-                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otRegDayAmount} readOnly />
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-[#E5E7EB] rounded-md" value={otRegDayMult} readOnly />
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-black" value={otRegDayAmount} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-black rounded-md" value={otRegDayMult} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
                   <Label className="text-[11px] font-bold text-[#1C2B33]">OTSunday</Label>
-                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otSundayAmount} readOnly />
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-[#E5E7EB] rounded-md" value={otSundayMult} readOnly />
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-black" value={otSundayAmount} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-black rounded-md" value={otSundayMult} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
                   <Label className="text-[11px] font-bold text-[#1C2B33]">OTSpecial</Label>
-                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otSpecialAmount} readOnly />
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-[#E5E7EB] rounded-md" value={otSpecialMult} readOnly />
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-black" value={otSpecialAmount} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-black rounded-md" value={otSpecialMult} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
                   <Label className="text-[11px] font-bold text-[#1C2B33]">OTLegal</Label>
-                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-[#E5E7EB]" value={otLegalAmount} readOnly />
-                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-[#E5E7EB] rounded-md" value={otLegalMult} readOnly />
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[100px] border-black" value={otLegalAmount} readOnly />
+                  <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 text-right tabular-nums w-[60px] bg-white border-black rounded-md" value={otLegalMult} readOnly />
                 </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-1 items-center">
                   <Label className="text-[11px] font-bold text-[#1C2B33]">OT ND</Label>
-                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[60px] border-[#E5E7EB]" value={otNdAmount} readOnly />
+                  <Input className="h-6 text-xs bg-white text-right tabular-nums text-[#1C2B33] font-bold px-1 w-[60px] border-black" value={otNdAmount} readOnly />
                   <div className="flex gap-0.5">
-                    <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 flex-1 min-w-0 text-right tabular-nums w-[50px] bg-white border-[#E5E7EB] rounded-md" value={otNdMult1} readOnly />
-                    <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 flex-1 min-w-0 text-right tabular-nums w-[50px] bg-white border-[#E5E7EB] rounded-md" value={otNdMult2} readOnly />
+                    <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 flex-1 min-w-0 text-right tabular-nums w-[50px] bg-white border-black rounded-md" value={otNdMult1} readOnly />
+                    <Input className="h-6 text-xs text-[#1C2B33] font-bold px-1 flex-1 min-w-0 text-right tabular-nums w-[50px] bg-white border-black rounded-md" value={otNdMult2} readOnly />
                   </div>
                 </div>
               </div>
@@ -1157,7 +1559,7 @@ export function PayrollEntry() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 gap-4 bg-muted/10 border-t border-[#E5E7EB]">
+        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 gap-4 bg-muted/10 border-t border-black">
           {/* Left side: Calculate + Print */}
           <div className="flex items-center gap-2">
             <Button
@@ -1167,8 +1569,22 @@ export function PayrollEntry() {
               CALCULATE NET PAY
             </Button>
             <Button
+              className="h-10 px-6 bg-[#10B981] hover:bg-[#059669] text-white font-black rounded-lg shadow-lg shadow-[#10B981]/20 transition-all active:scale-95 disabled:opacity-50"
+              onClick={handleSave}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  SAVING...
+                </div>
+              ) : (
+                'SAVE'
+              )}
+            </Button>
+            <Button
               variant="outline"
-              className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted border border-[#E5E7EB] rounded-lg text-[#1C2B33]"
+              className="h-10 w-10 flex items-center justify-center bg-card hover:bg-muted border border-black rounded-lg text-[#1C2B33]"
             >
               <Printer className="w-4 h-4" />
             </Button>
@@ -1185,6 +1601,77 @@ export function PayrollEntry() {
           </div>
         </div>
 
+
+        {/* Save Confirmation Modal */}
+        <AnimatePresence>
+          {showSaveConfirm && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-xl shadow-2xl border border-border w-full max-w-md overflow-hidden"
+              >
+                <div className="p-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm">
+                    <Calculator className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-950 mb-2">Save Payroll?</h3>
+                  <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+                    Are you sure you want to save this payroll data for <span className="font-bold text-slate-950">{empName}</span>?
+                  </p>
+                </div>
+                <div className="bg-slate-50 p-4 flex gap-3 justify-center border-t border-slate-100">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSaveConfirm(false)}
+                    className="flex-1 font-bold border-black hover:bg-slate-100"
+                  >
+                    NO
+                  </Button>
+                  <Button
+                    onClick={confirmSave}
+                    className="flex-1 bg-slate-950 hover:bg-slate-800 text-white font-black transition-all active:scale-95 shadow-lg shadow-slate-950/20"
+                  >
+                    YES
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Duplicate Data Modal */}
+        <AnimatePresence>
+          {showDuplicateModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-xl shadow-2xl border border-border w-full max-w-md overflow-hidden"
+              >
+                <div className="p-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4 border-4 border-white shadow-sm">
+                    <AlertTriangle className="w-8 h-8 text-amber-500" />
+                  </div>
+                  <h3 className="text-xl font-black text-slate-950 mb-2">Already Exists</h3>
+                  <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+                    Payroll data for this employee and period already exists.
+                  </p>
+                </div>
+                <div className="bg-slate-50 p-4 flex justify-center border-t border-slate-100">
+                  <Button
+                    onClick={() => setShowDuplicateModal(false)}
+                    className="bg-slate-950 hover:bg-slate-800 text-white font-black px-10 rounded-lg transition-all active:scale-95 shadow-lg shadow-slate-950/20"
+                  >
+                    OKAY, GOT IT
+                  </Button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
