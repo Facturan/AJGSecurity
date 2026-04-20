@@ -3,7 +3,7 @@ import { Sidebar } from "./dashboard/Sidebar";
 import { Dashboard } from "./dashboard/Dashboard";
 import { EmployeeRegistration } from "./dashboard/EmployeeRegistration";
 import { PayrollEntry } from "./dashboard/PayrollEntry";
-import { MasterData } from "./dashboard/MasterData";
+import { MasterData } from "./dashboard/masterdata";
 import { FirearmMasterData } from "./dashboard/FirearmMasterData";
 import { Settings } from "./dashboard/Settings";
 import { Company } from "./dashboard/Company";
