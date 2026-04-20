@@ -152,13 +152,17 @@ export function MasterDataProvider({ children }: { children: React.ReactNode }) 
       }
 
       if (lTypes) {
+        console.log(`[Diagnostic] Successfully loaded ${lTypes.length} Loan Types:`, lTypes);
         setLoanTypes(lTypes.map((lt: any) => ({ loanId: lt.loanId, loanType: lt.loanType })));
+      } else {
+        console.warn('[Diagnostic] Loan Types returned null or undefined.');
       }
+      
       if (otRates && otRates.length > 0) {
         setOvertimeRates(otRates[0]);
       }
     } catch (error) {
-      console.error('Error fetching master data:', error);
+      console.error('[Diagnostic] Error fetching master data from Supabase:', error);
       toast.error('Failed to load master data');
     } finally {
       setIsLoading(false);
