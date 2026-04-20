@@ -327,7 +327,7 @@ export function PayrollEntry() {
 
       // Fetch active loans automatically
       try {
-        console.log(`[Diagnostic] Fetching active loans for EmpID: ${emplID}`);
+        console.log(`[Diagnostic] Attempting to fetch active loans for EmpID: ${emplID}...`);
         const { data: loans, error } = await supabase
           .from('LOANS')
           .select('*')
@@ -335,11 +335,17 @@ export function PayrollEntry() {
           .eq('status', 'Active');
 
         if (error) {
-          console.error('[Diagnostic] Error fetching loans:', error);
+          console.error('[Diagnostic] Supabase Error fetching loans:', error);
+          toast.error(`Database error: ${error.message}`);
           throw error;
         }
 
-        console.log(`[Diagnostic] Loans found for ${fullName}:`, loans);
+        if (!loans || loans.length === 0) {
+          console.log(`[Diagnostic] No active loans found in DB for EmpID: ${emplID}.`);
+        } else {
+          console.log(`[Diagnostic] Successfully loaded ${loans.length} active loans:`, loans);
+          toast.info(`Loaded ${loans.length} active loans.`);
+        }
         if (loans && loans.length > 0) {
           toast.info(`Loaded ${loans.length} active loans for ${fullName}`);
           setActiveLoans(loans);
