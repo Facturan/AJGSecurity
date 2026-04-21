@@ -194,21 +194,25 @@ export function PayrollEntry() {
   };
 
   const fetchHistory = async () => {
-    if (!selectedEmpId || !dateFrom || !dateTo || !datePosting) return;
+    if (!selectedEmpId || !dateFrom || !dateTo) return;
 
     try {
+      console.log(`[Diagnostic] Fetching history for EmpID: ${selectedEmpId}, Period: ${dateFrom} to ${dateTo}`);
       const { data, error } = await supabase
         .from('PAYROLLDATA')
         .select('*')
         .eq('EmpID', parseInt(selectedEmpId))
         .eq('DateFrom', dateFrom)
         .eq('DateTo', dateTo)
-        .eq('DatePosting', datePosting)
+        // Intentionally ignoring DatePosting so we can grab old history from any posting day
         .order('PID', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Diagnostic] History fetch error:', error);
+        throw error;
+      }
       if (data) {
         // Income
         setSalaryMethod(data.SalaryMethod || 'daily');
@@ -384,7 +388,106 @@ export function PayrollEntry() {
         console.error('Error auto-filling loans:', err);
       }
 
-      // Trigger a recalc if needed
+      // Instead of waiting, explicitly trigger fetchHistory right now if dates are present.
+      // This ensures fetchHistory ALWAYS applies its historical overrides AFTER the active loans are populated.
+      if (dateFrom && dateTo) {
+         fetchHistoryForEmployee(emplID, dateFrom, dateTo);
+      } else {
+         setTimeout(calculateNetPay, 100);
+      }
+    }
+  };
+
+  // Helper function to allow handleSelectEmployee to call history after loans
+  const fetchHistoryForEmployee = async (empId: string, from: string, to: string) => {
+    try {
+      console.log(`[Diagnostic] Auto-fetching historical overrides for ${empId}...`);
+      const { data, error } = await supabase
+        .from('PAYROLLDATA')
+        .select('*')
+        .eq('EmpID', parseInt(empId))
+        .eq('DateFrom', from)
+        .eq('DateTo', to)
+        .order('PID', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data && !error) {
+         // Income
+        setSalaryMethod(data.SalaryMethod || 'daily');
+        setDailyRate(formatNumber(data.DailyRate || 0, 4));
+        setNoOfDays(String(data.NoOfDays || ''));
+        setBasePay(formatNumber(data.BasicRate || 0));
+        setOtRegDayHours(String(data.OTRegHrs || ''));
+        setOtSundayHours(String(data.OTSunHrs || ''));
+        setOtSpecialHours(String(data.OTSpecialHrs || ''));
+        setOtLegalHours(String(data.OTLegalHrs || ''));
+        setOtNdHours(String(data.OTNightDiffHrs || ''));
+
+        // Holiday
+        setSpecialHolidayHours(String(data.SpecHolHRS || ''));
+        setSpecialHolidayMult(String(data.SpecHolMult || ''));
+        setLegalHolidayHours(String(data.LegHolHRS || ''));
+        setLegalHolidayMult(String(data.LegHolMult || ''));
+        setSpecialHolidayAmount(formatNumber(data.TotalSpecialDay || 0));
+        setLegalHolidayAmount(formatNumber(data.TotalLegalDay || 0));
+        setTotalHoliday(formatNumber(data.TotalHoliday || 0));
+
+        setAllowance(formatNumber(data.AllowanceRate || 0));
+        setCashGasAllowance(formatNumber(data.CashGasAllowance || 0));
+        setFoodAllowanceIncome(formatNumber(data.FoodAllowanceIncome || 0));
+        setLoadAllowance(formatNumber(data.LoadAllowance || 0));
+        setIncentivesIncome(formatNumber(data.IncentivesIncome || 0));
+        setCommsIncome(String(data.CommsIncome || ''));
+        setOtRefund(String(data.OTRefund || ''));
+        setOuPay(String(data.OverUnderPay || ''));
+
+        // OT Rates (Rates from DB)
+        setOtRegDayAmount(formatNumber(data.OTRegDay || 0, 4));
+        setOtSundayAmount(formatNumber(data.OTSunday || 0, 4));
+        setOtSpecialAmount(formatNumber(data.OTSpecial || 0, 4));
+        setOtLegalAmount(formatNumber(data.OTLegal || 0, 4));
+        setOtNdAmount(formatNumber(data.OTND || 0, 4));
+
+        // Deductions
+        setAbsentDays(String(data.Absent || ''));
+        setLateMinutes(String(data.Late || ''));
+        setComms(formatNumber(data.GlobeExcess || 0));
+        setMpl(formatNumber(data.MPL || 0));
+        setHdmfLoan(formatNumber(data.HDMFLoan || 0));
+        setSssLoan(formatNumber(data.SSSLoan || 0));
+        setElBonitaLoan(formatNumber(data.ElBonitaLoan || 0));
+        setCashAdvance(formatNumber(data.CashAdvance || 0));
+        setStoreAcct(formatNumber(data.StoreAccount || 0));
+        setUniform(formatNumber(data.Uniform || 0));
+        setSafetyShoes(formatNumber(data.Shoes || 0));
+        setFoodAllowance(formatNumber(data.TravelAllowance || 0));
+        setPagIbigPhilhealth(formatNumber(data.PagIbigPhilhealth || 0));
+        setPagIbigLoan(formatNumber(data.PagIbigLoan || 0));
+        setRiceCa(formatNumber(data.RiceCA || 0));
+        setRice(formatNumber(data.Rice || 0));
+        setCpLoan(formatNumber(data.CPLoan || 0));
+        setSssPenaltyJohndorf(formatNumber(data.SSSPenaltyJohndorf || 0));
+        setThailandCA(formatNumber(data.ThailandCA || 0));
+        setMotorUrc(formatNumber(data.MotorURC || 0));
+        setChx(formatNumber(data.CHX || 0));
+        setFlagXUniform(formatNumber(data.FlagXUniform || 0));
+
+        // Contributions
+        setSssEmp(formatNumber(data.EmpSSS || 0));
+        setPhicEmp(formatNumber(data.PHIC || 0));
+        setHdmfEmp(formatNumber(data.EmpHDMF || 0));
+        setWtax(formatNumber(data.WTAX || 0));
+
+        setSssEmployer(formatNumber(data.ComSSS || 0));
+        setPhicEmployer(formatNumber(data.ComPHIC || 0));
+        setHdmfEmployer(formatNumber(data.ComHDMF || 0));
+
+        toast.info('Historical data found and populated.');
+      }
+    } catch (e) {
+      console.log('Error ignoring history:', e);
+    } finally {
       setTimeout(calculateNetPay, 100);
     }
   };
