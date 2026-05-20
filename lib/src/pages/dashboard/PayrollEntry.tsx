@@ -353,6 +353,7 @@ export function PayrollEntry() {
         if (loans && loans.length > 0) {
           toast.info(`Loaded ${loans.length} active loans for ${fullName}`);
           setActiveLoans(loans);
+          let accumulatedMisc = 0;
           loans.forEach((loan: any) => {
             const rawType = (loan.loanType || '').toLowerCase();
             const lType = rawType.replace(/[^a-z0-9]/g, '');
@@ -379,7 +380,16 @@ export function PayrollEntry() {
             else if (lType.includes('chx')) setChx(formattedAmt);
             else if (lType.includes('flagx') || lType.includes('jersey')) setFlagXUniform(formattedAmt);
             else if (lType.includes('pagibigphilhealth') || lType.includes('pagibig') || lType.includes('philhealth')) setPagIbigPhilhealth(formattedAmt);
+            else {
+              // Automatic catch-all for "Consolidated Deduction"
+              if (!lType.includes('loan')) {
+                accumulatedMisc += amt;
+              }
+            }
           });
+          if (accumulatedMisc > 0) {
+            setFoodAllowance(formatNumber(accumulatedMisc));
+          }
         } else {
           console.log(`[Diagnostic] No active loans found for ${fullName}`);
           setActiveLoans([]);
@@ -560,6 +570,12 @@ export function PayrollEntry() {
         else if (lType.includes('chx')) matchedAmount = deductions.chx;
         else if (lType.includes('flagx') || lType.includes('jersey')) matchedAmount = deductions.flagxuniform;
         else if (lType.includes('pagibigphilhealth') || lType.includes('pagibig') || lType.includes('philhealth')) matchedAmount = deductions.pagibigphilhealth;
+        else {
+          // Check if this was a miscellaneous "Other Deduction"
+          if (!lType.includes('loan')) {
+            matchedAmount = parseInput(foodAllowance);
+          }
+        }
 
         if (matchedAmount > 0) {
           console.log(`[Diagnostic] Success! Matched ${loan.loanType} (${loan.loanId}) with amount: ${matchedAmount}`);
@@ -1475,94 +1491,25 @@ export function PayrollEntry() {
                 <Label className="text-xs font-bold text-black">SSS Penalty Johndorf</Label>
                 <Input className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md" value={sssPenaltyJohndorf} onChange={(e) => setSssPenaltyJohndorf(e.target.value)} />
               </div>
+              {/* ── Deductions (auto-total) ── */}
               <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">Cash Advance(CA)</Label>
+                <Label className="text-xs font-bold text-black">Consolidated Deduction</Label>
                 <Input
-                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
-                  value={cashAdvance}
-                  onChange={(e) => setCashAdvance(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setCashAdvance(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">EGG/CAR</Label>
-                <Input
-                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
-                  value={storeAcct}
-                  onChange={(e) => setStoreAcct(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setStoreAcct(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">Uniform P.O</Label>
-                <Input
-                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
-                  value={uniform}
-                  onChange={(e) => setUniform(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setUniform(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">CHX</Label>
-                <Input
-                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
-                  value={chx}
-                  onChange={(e) => setChx(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setChx(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">Flag X Uniform/Jersey</Label>
-                <Input
-                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
-                  value={flagXUniform}
-                  onChange={(e) => setFlagXUniform(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setFlagXUniform(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">Safety shoes</Label>
-                <Input
-                  className="h-6 text-xs bg-white text-black font-bold px-1 text-right tabular-nums border-black"
-                  value={safetyShoes}
-                  onChange={(e) => setSafetyShoes(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setSafetyShoes(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">Rice CA</Label>
-                <Input
-                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
-                  value={riceCa}
-                  onChange={(e) => setRiceCa(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setRiceCa(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">Rice</Label>
-                <Input
-                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
-                  value={rice}
-                  onChange={(e) => setRice(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setRice(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">Thailand (C.A)</Label>
-                <Input
-                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
-                  value={thailandCA}
-                  onChange={(e) => setThailandCA(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setThailandCA(formatCurrency(e.target.value))}
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_120px] gap-3 items-center">
-                <Label className="text-xs font-bold text-black">Motor URC</Label>
-                <Input
-                  className="h-6 text-xs text-black font-bold px-1 text-right tabular-nums bg-white border-black rounded-md"
-                  value={motorUrc}
-                  onChange={(e) => setMotorUrc(formatWithCommas(e.target.value))}
-                  onBlur={(e) => setMotorUrc(formatCurrency(e.target.value))}
+                  className="h-6 text-xs bg-muted/20 text-black font-black px-1 text-right tabular-nums border-black rounded-md"
+                  value={formatNumber(
+                    parseInput(cashAdvance) +
+                    parseInput(storeAcct) +
+                    parseInput(uniform) +
+                    parseInput(chx) +
+                    parseInput(flagXUniform) +
+                    parseInput(riceCa) +
+                    parseInput(rice) +
+                    parseInput(thailandCA) +
+                    parseInput(motorUrc) +
+                    parseInput(safetyShoes) +
+                    parseInput(foodAllowance)
+                  )}
+                  readOnly
                 />
               </div>
 
